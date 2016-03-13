@@ -4,17 +4,35 @@
     <meta charset="UTF-8">
 	<script></script>
 	<script>
+	const ipcRenderer = require('electron').ipcRenderer;
+	var windowdisplay = function(actionname) {
+    	ipcRenderer.send('window-display', actionname);
+  	};
+
+
 	//console.log(window);
 	</script>
     <title>Electron PlayCanvas</title>
   </head>
   <body>
-    <h1>Hello World!</h1>
-    <br>Node version: <script>document.write(process.versions.node)</script>,
-    <br>Chromium  version: <script>document.write(process.versions.chrome)</script>,
-    <br>Electron  version: <script>document.write(process.versions.electron)</script>.
-	<br>
-	<br>
+	<div style="width:100%;height:20px">
+    	Electron Playcanvas!
+	</div>
+	<div style="width:100%;height:200px">
+    	WEB?
+	</div>
+	<div  style="width:100%;height:20px">
+	<button onclick="">Check Status</button>
+	<button onclick="windowdisplay('server');">Start Server</button>
+	<button onclick="windowdisplay('client');">Client Game</button>
+	<button onclick="windowdisplay('settings');">Settings</button>
+	<button onclick="windowdisplay('game');">Start Game</button>
 
+	</div>
   </body>
+  <footer>
+	  Node version: <script>document.write(process.versions.node)</script>,
+	  Chromium  version: <script>document.write(process.versions.chrome)</script>,
+	  Electron  version: <script>document.write(process.versions.electron)</script>
+  </footer>
 </html>

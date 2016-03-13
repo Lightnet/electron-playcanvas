@@ -54,6 +54,7 @@ setTimeout(function(){
 // 0 = socket.io
 // 1 = engine.io
 OBJIONetworkType = 0;
+
 //
 bConfigPlayCanvas = true;
 

@@ -68,9 +68,11 @@ function send_Latency_eio(){
   engineio.send('Latency');
   document.getElementById('etransport').innerHTML = engineio.transport.name;
 }
-
+console.log(document.URL);
 //var engineio = eio('ws://localhost:3000');
+//var engineio = eio('ws://[]');
 var engineio = eio();
+
 
 engineio.on('open', function(){
     send_Latency_eio();

@@ -1,0 +1,12 @@
+message Sceneobj {
+	required string type = 1;
+	optional string id = 2;
+	optional string name = 3;
+	optional float  px = 4;
+	optional float  py = 5;
+	optional float  pz = 6;
+	optional float  rx = 7;
+	optional float  ry = 8;
+	optional float  rz = 9;
+	optional float  rw = 10;
+}

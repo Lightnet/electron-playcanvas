@@ -53,8 +53,7 @@ setTimeout(function(){
 */
 // 0 = socket.io
 // 1 = engine.io
-OBJIONetworkType = 0;
-
+OBJIONetworkType = 1;
 //
 bConfigPlayCanvas = true;
 
@@ -263,11 +262,11 @@ function SetTime(){
 server.listen(process.env.PORT || 80, process.env.IP || "0.0.0.0", function(){
 	var addr = server.address();
 	//try{
-	//setTimeout(function(){
-		//var pce = require('./playcanvas-engine.js');
-		//pce.socketio_boardcast(broadcast);
-		//pce.engineio_boardcast(engineiobroadcast);
-	//}, 3000);
+	setTimeout(function(){
+		var pce = require('./playcanvas-engine.js');
+		pce.socketio_boardcast(broadcast);
+		pce.engineio_boardcast(engineiobroadcast);
+	}, 1000);
 
 	//}catch(e){
 		//console.log("playcanvas-engine?");

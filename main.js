@@ -39,10 +39,10 @@ function displaywindowid(windowid){
 				gameWindow.show();
 			}catch(e){
 				gameWindow = null;
-				gameWindow = buildwindow('http://localhost/',{width: 800, height: 600});
+				gameWindow = buildwindow('http://localhost/',{width: 800, height: 600, webPreferences:{nodeIntegration:false}});
 			}
 		}else{
-			gameWindow = buildwindow('http://localhost/',{width: 800, height: 600});
+			gameWindow = buildwindow('http://localhost/',{width: 800, height: 600, webPreferences:{nodeIntegration:false}});
 		}
 	}
 	if(windowid == 'server'){

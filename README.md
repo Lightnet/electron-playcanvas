@@ -13,8 +13,8 @@
 	
  ## Features:
   * Development for web game builds. (work in progress)
-  * Run the server express. 
-  * Run Rethinkdb for real time database. 
+  * Run the server express.
+  * Run Rethinkdb for real time database.
   * Socket.io for chat messages (work in progress)
   * Engine.io for server side game object and message. (work in progress)
   *
@@ -29,20 +29,20 @@
   * ammo.js
   
  ## web browser javascript:
-  * 
+  * long.min.js https://github.com/dcodeIO/long.js
+  * bytebuffer.min.js https://github.com/dcodeIO/bytebuffer.js
+  * protobuf.min.js https://github.com/dcodeIO/protobuf.js
+  * playcanvas-stable.js http://playcanvas.com
+
 
  ## Programs:
   * RethinkDB https://www.rethinkdb.com/
   * Atom https://atom.io/
   * Electron http://electron.atom.io/
-  * 
-  *   
-  
-	
 
  ## Window
 
-//http://localhost:8080/ rethinkdb
+http://localhost:8080/ rethinkdb
 
 window:
 ```

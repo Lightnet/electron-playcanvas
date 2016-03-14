@@ -152,19 +152,24 @@ function SetUpPlayCanvas(){
 
 function InitPC(){
 	console.log('InitPC');
+
+	setInterval(function () {
+		var msg = new Message('hello world message. client');
+		broadcast('object',msg.toArrayBuffer());
+	}, 1000);
+
 	//console.log(app);
 	if(!bConfigPlayCanvas){
 		console.log("create scene");
 		CreateScene();
 	}else{
 		console.log("load config...");
+		CreateScene();
 		/*
 		setInterval(function () {
 			var msg = new Message('hello world message. client');
 			engineiobroadcast(msg.toArrayBuffer());
 			//msg = null;
-
-
 			var data = new Sceneobj({
 				type:"ball",
 				name:'none',
@@ -183,7 +188,7 @@ function InitPC(){
 		}, 1000);
 		*/
 
-		CreateScene();
+
 		//CreateScene0();
 
 		/* //need the config for the physics
@@ -394,13 +399,18 @@ function CreateScene(){
 	var n = 0;
 	setInterval(function () {
 		n++;
-		if (n % 4 === 0)
+		if (n % 4 === 0){
 			wall.reset();
-		if (n % 4 === 1)
+			engineiobroadcast('reset');
+		}
+		if (n % 4 === 1){
 			ball.fire();
+			engineiobroadcast('fire');
+		}
 		//var msg = new Message('hello world message. client');
 		//engineiobroadcast(msg.toArrayBuffer());
 		//msg = null;
+
 	}, 1000);
 
 	//setInterval(function () {
@@ -410,6 +420,7 @@ function CreateScene(){
 
 
 	//update scene to send to clients
+	//var count = 0;
 	app.on("update", function (dt) {
 		var data;
 		ball.entity.rigidbody.syncEntityToBody();
@@ -423,8 +434,12 @@ function CreateScene(){
 				console.log('error network?');
 			}
 		}
+		//count++;
+		//console.log("....");
 		//engine.io
+		//if((OBJIONetworkType == 1)&&(count > 10)){
 		if(OBJIONetworkType == 1){
+			//count = 0;
 			//console.log('engine.io object data');
 			//convert into string instead of object that it can't read from web browser
 			if(typeof engineiobroadcast == 'function'){

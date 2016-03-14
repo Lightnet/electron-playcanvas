@@ -261,17 +261,17 @@ function SetTime(){
 
 server.listen(process.env.PORT || 80, process.env.IP || "0.0.0.0", function(){
 	var addr = server.address();
-	//try{
+	try{
 	setTimeout(function(){
 		var pce = require('./playcanvas-engine.js');
 		pce.socketio_boardcast(broadcast);
 		pce.engineio_boardcast(engineiobroadcast);
 	}, 1000);
 
-	//}catch(e){
-		//console.log("playcanvas-engine?");
-		//console.log(e);
-	//}
+	}catch(e){
+		console.log("playcanvas-engine?");
+		console.log(e);
+	}
 	console.log("PlayCanvas server listening at", addr.address + ":" + addr.port);
 	//SetTime();
 });

@@ -154,6 +154,12 @@ function CreateScene(pc,app){
 
 		for (var i = 0; i < 25; i++) {
         	var body = new pc.Entity();
+			body.end = new pc.Vec3();
+			body.endRot = new pc.Quat();
+			body.progressp = 0;
+			body.progressr = 0;
+			body.durationp = 10;
+			body.durationr = 10;
         	body.addComponent('model', {
           		type: "box",
           		castShadows: true
@@ -165,25 +171,68 @@ function CreateScene(pc,app){
           		//type: "box",
           		//halfExtents: [0.5, 0.5, 0.5]
         	//});
-        	app.root.addChild(body);
-        	body.model.model.meshInstances[0].material = i % 2 ? black : white;
-        	this.bricks.push(body);
+			body.lpos = function(pos){
+				//console.log(this);
+				//var e = this.entity;
+				this.progressp = 0; //reset counter
+				this.progressr = 0; //reset counter
+				//this.setPosition(pos);
+				this.setPosition(this.end);
+				this.end = pos;
+			};
+			body.model.model.meshInstances[0].material = i % 2 ? black : white;
+			app.root.addChild(body);
+			this.bricks.push(body);
       }
       blocks = this.bricks;
-      //this.reset();
+      this.reset();
     }
 
+	Wall.prototype.update = function (dt) {
+      	for (var i = 0; i < this.bricks.length; i++) {
+			var e = this.bricks[i];
+			e.progressp = (e.progressp || 0.0) + dt / e.durationp;
+			//update position
+			var r = new pc.Vec3();
+			r.lerp(e.getPosition(),e.end,e.progressp);
+			e.setPosition(r.clone());
+			//update rotation
+			e.progressr = (e.progressr || 0.0) + dt / e.durationr;
+			var currRot = new pc.Quat(); // Preallocate and cache this so as not to allocate every frame
+			currRot.slerp(e.getRotation(), e.endRot, e.progressr); // Ramp alpha from 0 to 1 over time
+			//if(i = 0){
+				//console.log(currRot.toString());
+			//}
+			e.setRotation(currRot);
+
+      	}
+    };
+
     Wall.prototype.reset = function () {
-      	//for (var i = 0; i < this.bricks.length; i++) {
-        	//var e = this.bricks[i];
+      	for (var i = 0; i < this.bricks.length; i++) {
+        	var e = this.bricks[i];
+			var posp = new pc.Vec3(i % 5 - 2, Math.floor(i / 5) + 0.5, 0);
+			e.lpos(posp);
+			//console.log(e);
+			e.progressp = 0
+			e.progressr = 0
+			e.setPosition(posp);
+			e.setRotation(new pc.Quat());
+			e.progress = 0;
         	//e.rigidbody.teleport(i % 5 - 2, Math.floor(i / 5) + 0.5, 0, 0, 0, 0);
         	//e.rigidbody.linearVelocity = pc.Vec3.ZERO;
         	//e.rigidbody.angularVelocity = pc.Vec3.ZERO;
-      	//}
+      	}
     };
 
 	function Ball() {
 		var e = new pc.Entity();
+		e.end = new pc.Vec3();
+		e.endRot = new pc.Quat();
+		e.progressp = 0;
+		e.progressr = 0;
+		e.durationp = 10;
+		e.durationr = 10;
 		e.setPosition(0, -10, 0);
 		e.addComponent('model', {
 			type: "sphere",
@@ -200,26 +249,44 @@ function CreateScene(pc,app){
 		e.model.model.meshInstances[0].material = red;
 		app.root.addChild(e);
 		this.entity = e;
-
-		this.entity.update = function (dt){
-			console.log('update?');
-		};
-
-
 	}
 
 	Ball.prototype.fire = function () {
 		var e = this.entity;
+		e.progressp = 0;
+		e.progressr = 0;
 		//e.rigidbody.teleport(0, 2, 5);
 		//e.rigidbody.linearVelocity = new pc.Vec3((Math.random() - 0.5) * 10, 7, -30);
 		//e.rigidbody.angularVelocity = pc.Vec3.ZERO;
+	};
+
+	Ball.prototype.position = function (pos) {
+		var e = this.entity;
+		e.progress = 0; //reset counter
+		e.setPosition(e.end);
+		e.end = pos;
+	};
+
+	Ball.prototype.update = function (dt) {
+		var e = this.entity;
+		var r = new pc.Vec3();
+		//update position
+		e.progressp = (e.progressp || 0.0) + dt / e.durationp;
+		r.lerp(e.getPosition(),e.end,e.progressp);
+		e.setPosition(r.clone());
+		r = null;
+		//update rotate
+		var currRot = new pc.Quat(); // Preallocate and cache this so as not to allocate every frame
+		e.progressr = (e.progressr || 0.0) + dt / e.durationr;
+		currRot.slerp(e.getRotation(), e.endRot, e.progressr); // Ramp alpha from 0 to 1 over time
+		e.setRotation(currRot);
 	};
 
     // Create the scene
 	var camera = new Camera();
 	var light = new Light();
     var ground = new Ground();
-    var wall = new Wall();
+    wall = new Wall();
     ball = new Ball();
 
     // Reset the wall and fire the ball every 4 seconds
@@ -245,5 +312,12 @@ function CreateScene(pc,app){
     //console.log(ball.entity.rigidbody.entity.position.toString());
 	app.on("update", function (dt) {
 		camera.update(dt);
+		if(wall !=null){
+			wall.update(dt);
+		}
+
+		if(ball !=null){
+			ball.update(dt);
+		}
 	});
 }

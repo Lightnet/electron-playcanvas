@@ -1,6 +1,7 @@
 //global access variables
 var ball; //class ball function
 var blocks; //array of bricks object
+var wall;
 
 var ProtoBuf = dcodeIO.ProtoBuf;
 var ByteBuffer = dcodeIO.ByteBuffer;
@@ -57,6 +58,16 @@ socketio.on('disconnect', function () {
 	console.log("socket.io disconnect");
 	//document.getElementById('stransport').innerHTML = '(disconnected)';
 });
+
+socketio.on('object', function (data) {
+	//console.log('data');
+	//console.log(data);
+	try{
+		var msg = Message.decode(data);
+		//console.log("msg:" + msg.text);
+	}catch(e){}
+});
+
 socketio.on('obj', function (msg) {
 	var p;
 	var r;
@@ -108,6 +119,15 @@ engineio.on('open', function(){
 		//if(data == Message()){
 			//console.log("found message");
 		//}
+		if(data == 'reset'){
+			//console.log("found reset");
+			if(wall != null){
+				wall.reset();
+			}
+		}
+		if(data == 'fire'){
+			//console.log("found fire");
+		}
 		if(data == 'Latency'){
             var latency = new Date - elast;
             document.getElementById('elatency').innerHTML = latency + 'ms';
@@ -127,19 +147,31 @@ engineio.on('open', function(){
 				//console.log('ball?');
 				//console.log(Sceneobj);
 				if(typeof ball != 'undefined'){
-					ball.entity.setPosition(Sceneobj.px,Sceneobj.py,Sceneobj.pz);
+					//ball.entity.setPosition(Sceneobj.px,Sceneobj.py,Sceneobj.pz);
+					ball.position(new pc.Vec3(Sceneobj.px,Sceneobj.py,Sceneobj.pz));
 					quat = new pc.Quat(Sceneobj.rx,Sceneobj.ry,Sceneobj.rz,Sceneobj.rw);
-					ball.entity.setRotation(quat);
+					//ball.entity.setRotation(quat);
+					ball.entity.endRot = quat.clone();
+					quat = null;
 				}
 			}
+
 			if(Sceneobj.type == 'block'){
 				//console.log('block?');
 				if(typeof blocks != 'undefined'){
-					blocks[parseInt(Sceneobj.id)].setPosition(Sceneobj.px,Sceneobj.py,Sceneobj.pz);;
+					//blocks[parseInt(Sceneobj.id)].setPosition(Sceneobj.px,Sceneobj.py,Sceneobj.pz);
+					//blocks[parseInt(Sceneobj.id)].lpos(new pc.Vec3(Sceneobj.px,Sceneobj.py,Sceneobj.pz));
+					var lpos = new pc.Vec3(Sceneobj.px,Sceneobj.py,Sceneobj.pz);
+					blocks[parseInt(Sceneobj.id)].lpos(lpos);
+					//if(Sceneobj.id == 0){}
 					quat = new pc.Quat(Sceneobj.rx,Sceneobj.ry,Sceneobj.rz,Sceneobj.rw);
 					blocks[parseInt(Sceneobj.id)].setRotation(quat);
+					//blocks[parseInt(Sceneobj.id)].endRot = quat.clone();
+					quat = null;
 				}
 			}
+
+			Sceneobj = null;
 			//console.log("msg:" + msg.text);
 			//console.log('pass');
 		}catch(e){

@@ -1,23 +1,33 @@
 # electron-playcanvas
  Created by: Lightnet
 
- ## License [CC0 (Public Domain)](LICENSE.md)
+ ## License:
+  [CC0 (Public Domain)](LICENSE.md)
 
- ## Development Status: Early Stage.
+ ## Development Status:
+  Early Stage.
 
- ## Information: Using the Electron to have PlayCanvas to run stand alone application.
-	
-	
-	
-	
-	
+ ## Information:
+  Using the Electron to have PlayCanvas to run stand alone application.
+  As well server hosting on local play.
+
+ ## Application Menus
+  * Check Status (no function yet)
+  * Start server (no function yet)
+  * Client Game (no function yet)
+  * Settings (no function yet)
+  * Start Game (work in progress)
+
+ ## Base stuff:
+  * Currently it start a server from background and not the window browser.
+  * Start Game is link to the url default localhost.
+
  ## Features:
   * Development for web game builds. (work in progress)
   * Run the server express.
   * Run Rethinkdb for real time database.
   * Socket.io for chat messages (work in progress)
   * Engine.io for server side game object and message. (work in progress)
-  *
 
  ## Notes:
   * Not recommend for hosting that is under development.
@@ -27,18 +37,30 @@
   * rethinkdb
   * protobufjs
   * ammo.js
-  
+  * express
+  * socket.io
+  * engine.io
+  * async
+  * helmet
+  * jsdom
+  * xmlhttprequest
+
  ## web browser javascript:
   * long.min.js https://github.com/dcodeIO/long.js
   * bytebuffer.min.js https://github.com/dcodeIO/bytebuffer.js
   * protobuf.min.js https://github.com/dcodeIO/protobuf.js
   * playcanvas-stable.js http://playcanvas.com
-
+  * smoothie.js http://smoothiecharts.org/
 
  ## Programs:
   * RethinkDB https://www.rethinkdb.com/
   * Atom https://atom.io/
   * Electron http://electron.atom.io/
+  *
+ ## Installing:
+  npm install
+
+  npm start //to start application
 
  ## Window
 

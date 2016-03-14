@@ -1,33 +1,69 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<title>playcanvas physics nodejs headless test</title>
+		<title>playcanvas physics test</title>
+		<script type="text/javascript" src="/smoothie.js"></script>
 		<script src="long.min.js"></script>
 		<script src="bytebuffer.min.js"></script>
 		<script src="protobuf.min.js"></script>
 		<script src="ammo.443a8cf.js"></script>
-		<script src="playcanvas-latest.js"></script>
+
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="/engine.io.js"></script>
 		<script src="/network.js"></script>
+
+		<script src="playcanvas-latest.js"></script>
 		<script src="/scene.js"></script>
+
 		<style>
 			body {
-				padding-top: 60px;
+				#position: absolute;
+				#top: 0px;
+				#left: 0px;
+				#width: 100%;
+				#height: 100%;
+				padding-top: 0px;
 			}
-
-			canvas {
+			application-canvas {
 				position: absolute;
 				top: 0px;
 				left: 0px;
 				width: 100%;
 				height: 100%;
+				padding-top: 0px;
+			}
+
+			#game-canvas {
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				width: 100%;
+				height: 100%;
+				padding-top: 0px;
+			}
+
+			#displaydebug {
+				position: absolute;
+				top: 0px;
+				right: 0px;
+				width: 100%;
+				height: 100%;
+				padding-top: 0px;
 			}
 			</style>
 			<script>
 			</script>
 	</head>
 	<body>
-		<canvas id="application-canvas"></canvas>
+		<div id="game-canvas">
+			<canvas id="application-canvas"></canvas>
+		</div>
+		<div id="displaydebug">
+			<canvas id="chartcanvas" width="400" height="100"></canvas>
+			<p>
+			[<label style="color:yellow">socket.io latency <span style="color:green" id="slatency"></span></label>]
+			[<label style="color:yellow">engine.io latency <span style="color:blue" id="elatency"></span></label>]
+			</p>
+		</div>
 	</body>
 </html>

@@ -1,0 +1,12 @@
+message Objectscene {
+	required string type = 0;
+    optional string id = 1;
+	optional string name = 2;
+	optional int32  px = 3;
+	optional int32  py = 4;
+	optional int32  pz = 5;
+	optional int32  rx = 6;
+	optional int32  ry = 7;
+	optional int32  rz = 8;
+	optional int32  rw = 9;
+}

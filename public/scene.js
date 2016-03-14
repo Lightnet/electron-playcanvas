@@ -167,7 +167,6 @@ function CreateScene(pc,app){
         	//});
         	app.root.addChild(body);
         	body.model.model.meshInstances[0].material = i % 2 ? black : white;
-
         	this.bricks.push(body);
       }
       blocks = this.bricks;
@@ -201,6 +200,12 @@ function CreateScene(pc,app){
 		e.model.model.meshInstances[0].material = red;
 		app.root.addChild(e);
 		this.entity = e;
+
+		this.entity.update = function (dt){
+			console.log('update?');
+		};
+
+
 	}
 
 	Ball.prototype.fire = function () {

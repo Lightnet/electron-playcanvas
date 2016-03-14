@@ -8,17 +8,56 @@ var ByteBuffer = dcodeIO.ByteBuffer;
 var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
 var Sceneobject = ProtoBuf.loadProtoFile("/sceneobj.proto").build("Sceneobj");
 
+function addListener(event, obj, fn) {
+    if (obj.addEventListener) {
+        obj.addEventListener(event, fn, false);   // modern browsers
+    } else {
+        obj.attachEvent("on"+event, fn);          // older versions of IE
+    }
+}
+
+var smoothie = new SmoothieChart();
+// Data
+var line1 = new TimeSeries();
+var line2 = new TimeSeries();
+// Add to SmoothieChart
+smoothie.addTimeSeries(line1,{ strokeStyle:'rgb(0,0,255)', lineWidth:1 });
+smoothie.addTimeSeries(line2,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:1 });
+
+//make sure this load right
+addListener("load", window,function(){
+    //smoothie.streamTo(document.getElementById("mycanvas"));
+    smoothie.streamTo(document.getElementById("chartcanvas"), 1000 /*delay*/);
+});
+
+var siolast;
+function send_Latency_sio(){
+  siolast = new Date;
+  socketio.emit('Latency');
+  //document.getElementById('stransport').innerHTML = socketio.io.engine.transport.name;
+  //document.getElementById('stransport').innerHTML = socketio.socket.transport.name;
+}
+
 //===============================================
 // Socket.io
 //===============================================
-var socket = io.connect();
-socket.on('connect', function () {
+var socketio = io.connect();
+socketio.emit('Latency');
+socketio.on('Latency', function(){
+	//console.log('socket.io Latency');
+	var latency = new Date - siolast;
+	document.getElementById('slatency').innerHTML = latency + 'ms';
+	line2.append(+new Date, latency);
+	setTimeout(send_Latency_sio, 100);
+});
+socketio.on('connect', function () {
 	console.log("socket.io connect");
 });
-socket.on('disconnect', function () {
+socketio.on('disconnect', function () {
 	console.log("socket.io disconnect");
+	//document.getElementById('stransport').innerHTML = '(disconnected)';
 });
-socket.on('obj', function (msg) {
+socketio.on('obj', function (msg) {
 	var p;
 	var r;
 	var quat;
@@ -49,12 +88,19 @@ socket.on('obj', function (msg) {
 //===============================================
 //engine.io
 //===============================================
+var elast;
+function send_Latency_eio(){
+  elast = new Date;
+  engineio.send('Latency');
+  //document.getElementById('etransport').innerHTML = engineio.transport.name;
+}
 var engineio = eio('ws://localhost');
 //var engineio = eio();
+send_Latency_eio();
 engineio.on('open', function(){
     //console.log("client web browser");
     //console.log(socket);
-    socket.send('pong');
+    engineio.send('pong');
     engineio.on('message', function(data){
         //console.log("-----");
         //console.log(typeof data);
@@ -62,6 +108,13 @@ engineio.on('open', function(){
 		//if(data == Message()){
 			//console.log("found message");
 		//}
+		if(data == 'Latency'){
+            var latency = new Date - elast;
+            document.getElementById('elatency').innerHTML = latency + 'ms';
+            //if (time) time.append(+new Date, latency);
+            line1.append(+new Date, latency)
+            setTimeout(send_Latency_eio, 100);
+        }
 		try{
 			var msg = Message.decode(data);
 			//console.log("msg:" + msg.text);
@@ -93,51 +146,6 @@ engineio.on('open', function(){
 			//console.log('fail');
 			//console.log('error:'+e);
 		}
-
-
-		/*
-        var searchindex = data.search('type'); //search type in the string
-        if(searchindex > 0){
-            if(typeof data === 'string'){
-                //console.log('pass');
-                try{//try to sure there is data matches
-                    var p;
-                    var r;
-                    var quat;
-                    var obj = JSON.parse(data);
-                    //console.log(obj['type']);
-                    if(obj['type'] == 'ball'){
-                        if(typeof ball != 'undefined'){
-                            p = obj['p']; //position [x, y, z]
-                            r = obj['r']; //rotation [x, y, z, w]
-                            ball.entity.setPosition(p[0],p[1],p[2]);
-                            quat = new pc.Quat(r[0],r[1],r[2],r[3]);
-                            ball.entity.setRotation(quat);
-                        }
-                    }
-                    if(obj['type'] == 'block'){
-                        if(typeof blocks != 'undefined'){
-                            p = obj['p']; //position [x, y, z]
-                            r = obj['r']; //rotation [x, y, z, w]
-                            blocks[obj['id']].setPosition(p[0],p[1],p[2]);
-                            quat = new pc.Quat(r[0],r[1],r[2],r[3]);
-                            blocks[obj['id']].setRotation(quat);
-                        }
-                    }
-                    p=null;
-                    p=null;
-                    quat=null;
-                    obj=null;
-                }catch (error){
-                    console.log(error);
-                }
-            }
-        }else{//display other strings
-            console.log("||---");
-            console.log(typeof data);
-            console.log(data);
-        }
-		*/
     });
     engineio.on('close', function(){
         console.log("engine.io user close");

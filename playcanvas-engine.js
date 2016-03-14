@@ -20,6 +20,7 @@ exports.engineio_boardcast=function(obj){
 // Initialize from .proto file
 var Message = ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "example.proto")).build("Message");
 var Sceneobj = new ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "sceneobj.proto")).build("Sceneobj");
+var Objectscene = new ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "objectscene.proto")).build("Objectscene");
 
 console.log("playcavnas engine server side");
 window ={};

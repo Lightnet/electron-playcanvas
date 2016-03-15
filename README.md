@@ -11,6 +11,10 @@
   Using the Electron to have PlayCanvas to run stand alone application.
   As well server hosting on local play.
 
+ # Require to run application:
+  * nodejs https://nodejs.org/
+  * RethinkDB https://www.rethinkdb.com/
+
  ## Application Menus
   * Check Status (no function yet)
   * Start server (no function yet)
@@ -53,10 +57,11 @@
   * smoothie.js http://smoothiecharts.org/
 
  ## Programs:
-  * RethinkDB https://www.rethinkdb.com/
+  * RethinkDB https://www.rethinkdb.com/ (require)
   * Atom https://atom.io/
   * Electron http://electron.atom.io/
-  *
+  * nodejs https://nodejs.org/ (require)
+
  ## Installing:
   npm install
 

@@ -1,27 +1,52 @@
+/*
+	Name:
+	Link:https://bitbucket.org/Lightnet/
+	Created By: Lightnet
+	License: Creative Commons Zero [Note there multiple Licenses]
+  	Please read the readme.txt file for more information.
+*/
+
 'use strict';
 
-var Menu = require('menu');
-var Tray = require('tray');
+function run_cmd(cmd, args, callBack ) {
+    var spawn = require('child_process').spawn;
+    var child = spawn(cmd, args);
+    var resp = "";
+    child.stdout.on('data', function (buffer) { resp += buffer.toString() });
+    child.stdout.on('end', function() { callBack (resp) });
+} // ()
+
+//run_cmd( "ls", ["-l"], function(text) { console.log (text) });
+run_cmd( 'rethinkdb', [], function(text) { console.log (text) });
 
 const electron = require('electron');
 // Module to control application life.
 const app = electron.app;
 const ipcMain = electron.ipcMain;
 const ipcRenderer = require('electron').ipcRenderer;
+var Menu = require('menu');
+var Tray = require('tray');
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
-var databaseWindow;
-var serverWindow;
-var clientWindow;
-var gameWindow;
-var settingsWindow;
+
+var windows = [];
+windows['database']={object:null,url:'http://localhost:8080/',options:{width: 800, height: 600, webPreferences:{nodeIntegration:false}} };
+windows['server']={object:null,url:'file://' + __dirname + '/playcanvas-server.html',options:{width: 800, height: 600} };
+windows['client']={object:null,url:'http://localhost/'+'client.html',options:{width: 800, height: 600, webPreferences:{nodeIntegration:false}} };
+windows['game']={object:null,url:'http://localhost/',options:{width: 800, height: 600, webPreferences:{nodeIntegration:false}} };
+windows['settings']={object:null,url:'file://' + __dirname + '/settings.html',options:{width: 800, height: 600, webPreferences:{nodeIntegration:false}} };
+windows['status']={object:null,url:'http://localhost/',options:{width: 800, height: 600, webPreferences:{nodeIntegration:false}} };
+
 var appIcon = null;
 //server express
-var server = require('./server.js');
+var serverclose;
+setTimeout(function(){
+serverclose = require('./server.js').close;
+},3000);
 
 function buildwindow(url,options){
 	var _Window = new BrowserWindow(options);
@@ -32,69 +57,34 @@ function buildwindow(url,options){
 	return _Window;
 }
 
+function windowcheck(id){
+	if(windows[id]['object'] != null){
+		try{
+			windows[id]['object'].show();
+		}catch(e){
+			windows[id]['object'] = null;
+			windows[id]['object'] = buildwindow(windows[id]['url'],windows[id]['options']);
+		}
+	}else{
+		windows[id]['object'] = buildwindow(windows[id]['url'],windows[id]['options']);
+	}
+}
+
 function displaywindowid(windowid){
 	if(windowid == 'game'){
-		if(gameWindow != null){
-			try{
-				gameWindow.show();
-			}catch(e){
-				gameWindow = null;
-				gameWindow = buildwindow('http://localhost/',{width: 800, height: 600, webPreferences:{nodeIntegration:false}});
-			}
-		}else{
-			gameWindow = buildwindow('http://localhost/',{width: 800, height: 600, webPreferences:{nodeIntegration:false}});
-		}
+		windowcheck(windowid);
 	}
 	if(windowid == 'server'){
-		if(serverWindow != null){
-			try{
-				serverWindow.show();
-			}catch(e){
-				serverWindow = null;
-				serverWindow = buildwindow('file://' + __dirname + '/playcanvas-server.html',{width: 800, height: 600});
-			}
-
-		}else{
-			serverWindow = buildwindow('file://' + __dirname + '/playcanvas-server.html',{width: 800, height: 600});
-		}
+		windowcheck(windowid);
 	}
 	if(windowid == 'client'){
-		if(clientWindow != null){
-			try{
-				clientWindow.show();
-			}catch(e){
-				clientWindow = null;
-				clientWindow = buildwindow('http://localhost/'+'client.html',{width: 800, height: 600});
-			}
-
-		}else{
-			clientWindow = buildwindow('http://localhost/'+'client.html',{width: 800, height: 600});
-		}
+		windowcheck(windowid);
 	}
 	if(windowid == 'database'){
-		if(databaseWindow != null){
-			try{
-				databaseWindow.show();
-			}catch(e){
-				databaseWindow = null;
-				databaseWindow = buildwindow('http://localhost:8080/',{width: 800, height: 600});
-			}
-		}else{
-			databaseWindow = buildwindow('http://localhost:8080/',{width: 800, height: 600});
-		}
+		windowcheck(windowid);
 	}
-
 	if(windowid == 'settings'){
-		if(settingsWindow != null){
-			try{
-				settingsWindow.show();
-			}catch(e){
-				settingsWindow = null;
-				settingsWindow = buildwindow('file://' + __dirname + '/settings.html',{width: 800, height: 600});
-			}
-		}else{
-			settingsWindow = buildwindow('file://' + __dirname + '/settings.html',{width: 800, height: 600});
-		}
+		windowcheck(windowid);
 	}
 }
 
@@ -132,7 +122,7 @@ function createWindow () {
   		console.log('windowid:'+windowid);
 		displaywindowid(windowid);
 	});
-
+	setTimeout(function(){
 	// Create the browser window.
 	mainWindow = new BrowserWindow({width: 800, height: 600});
 	// and load the index.html of the app.
@@ -153,26 +143,34 @@ function createWindow () {
 		// when you should delete the corresponding element.
 		mainWindow = null;
 	});
+},5000);
 }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.on('ready', createWindow);
-
+//TASKKILL /F /IM rethinkdb.exe /IM rethinkdb.exe
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+	// On OS X it is common for applications and their menu bar
+	// to stay active until the user quits explicitly with Cmd + Q
+	if (process.platform !== 'darwin') {
+		console.log("close app.");
+		//close express
+		serverclose();
+		//stop rethinkdb
+		run_cmd( 'TASKKILL', [ '/F','/IM','rethinkdb.exe'], function(text) { console.log (text) });
+		//process.exit(0);
+		app.quit();
+	}
 });
 
 app.on('activate', function () {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  console.log("activate?");
-  if (mainWindow === null) {
-    createWindow();
-  }
+	// On OS X it's common to re-create a window in the app when the
+	// dock icon is clicked and there are no other windows open.
+	console.log("activate?");
+	if (mainWindow === null) {
+		createWindow();
+	}
 });
+//},1000);

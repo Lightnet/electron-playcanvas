@@ -7,7 +7,7 @@
         <script type="text/javascript" src="/protobuf.min.js"></script><!--Load order -->
 		<script type="text/javascript" src="/socket.io/socket.io.js"></script>
         <script type="text/javascript" src="/engine.io.js"></script>
-        <script type="text/javascript" src="/io_client.js"></script>
+        <script type="text/javascript" src="/latency_io.js"></script>
     </head>
     <body>
 		<h1>socket.io latency <span style="color:green" id="slatency"></span></h1>
@@ -27,7 +27,7 @@
         <button onclick="send_buffer();">Send</button>
 
         <br>
-        <label> Bytebuffer :</label>
+        <label> Bytebuffer local:</label>
         <input id="buffertest" type="text" value="buffer text">
         <button onclick="test_buffer();">Send</button>
 

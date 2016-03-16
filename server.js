@@ -13,8 +13,6 @@ var plugin = require('./app/libs/plugin.js');
 config = require(__dirname + "/app/config.js");
 plugin.setConfig(config);
 console.log("MODE:" + config.mode);
-//enable multiple views for module builds
-//require('./app/libs/ViewEnableMultiFolders');
 var methodOverride = require('method-override');
 var compression = require('compression');
 var session = require('express-session');
@@ -30,11 +28,6 @@ var engine = require('engine.io');
 var engineio = new engine.Server({ 'transports': ['websocket', 'polling'] });
 var routes = require('./app/routes/index');
 var users = require('./app/routes/users');
-// 0 = socket.io
-// 1 = engine.io
-OBJIONetworkType = 1;
-//
-bConfigPlayCanvas = true;
 //load initalizers
 //console.log("loading Sync initalizers:");
 var init_files = fs.readdirSync(__dirname + "/app/initalizers");
@@ -107,6 +100,9 @@ var io = socketio.listen(server);
 //res.header("Content-Security-Policy", "default-src 'self';script-src 'self';object-src 'none';img-src 'self';media-src 'self';frame-src 'none';font-src 'self' data:;connect-src 'self';style-src 'self'");
 //next();
 //});
+//===============================================
+// express config start
+//===============================================
 router.use(express.static(path.resolve(__dirname, 'public')));
 router.set('view engine', 'ejs'); // set up ejs for templating
 router.set('views', path.join(__dirname, '/app/views'));
@@ -119,11 +115,18 @@ router.use(bodyParser.urlencoded({ extended: true })); // get information from h
 router.use(bodyParser.json({ type: 'application/vnd.api+json' }));
 router.use(cookieParser()); // required before session
 router.use(methodOverride());
+//===============================================
+// express config start
+//===============================================
 //load file to write url file js
 var eio_contents = fs.readFileSync(__dirname + '/node_modules/engine.io-client/engine.io.js').toString();
 router.get('/engine.io.js', function (req, res) {
     //res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(eio_contents);
+});
+//test index page default
+router.get('/', function (req, res) {
+    res.render("index", {});
 });
 // route, router
 plugin.SetRoutes(routes, router);
@@ -313,40 +316,11 @@ server.listen(process.env.PORT || 80, process.env.IP || "0.0.0.0", function () {
     var addr = server.address();
     //Init start up after the web server is up.
     plugin.InitPost();
-    /*
-    try{
-    setTimeout(function(){
-        var pce = require('./playcanvas-engine.js');
-        pce.socketio_boardcast(broadcast);
-        pce.engineio_boardcast(engineiobroadcast);
-    }, 1000);
-
-    }catch(e){
-        console.log("playcanvas-engine?");
-        console.log(e);
-    }
-    */
     console.log("PlayCanvas server listening at", addr.address + ":" + addr.port);
     //SetTime();
 });
-//console.log(router);
-//console.log(server);
-//exports = server;
-// Count down from 10 seconds
-/*
-(function countDown (counter) {
-  console.log(counter);
-  if (counter > 0)
-    return setTimeout(countDown, 1000, counter - 1);
-
-  // Close the server
-  server.close(function () { console.log('Server closed!'); });
-  // Destroy all open sockets
-})(10);
-*/
 function close() {
     server.close(function () { console.log('Server closed!'); });
     //require('./stop.js');
 }
 exports.close = close;
-//

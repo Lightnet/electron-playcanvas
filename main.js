@@ -46,7 +46,7 @@ var appIcon = null;
 var serverclose;
 setTimeout(function(){
 serverclose = require('./server.js').close;
-},3000);
+},1500);
 
 function buildwindow(url,options){
 	var _Window = new BrowserWindow(options);
@@ -143,7 +143,7 @@ function createWindow () {
 		// when you should delete the corresponding element.
 		mainWindow = null;
 	});
-},5000);
+},2000);
 }
 
 // This method will be called when Electron has finished

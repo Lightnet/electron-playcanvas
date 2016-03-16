@@ -15,7 +15,7 @@ var wall;
 var ProtoBuf = dcodeIO.ProtoBuf;
 var ByteBuffer = dcodeIO.ByteBuffer;
 
-var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
+//var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
 var Sceneobject = ProtoBuf.loadProtoFile("/sceneobj.proto").build("Sceneobj");
 
 function addListener(event, obj, fn) {
@@ -36,7 +36,6 @@ smoothie.addTimeSeries(line2,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:1 });
 
 //make sure this load right
 addListener("load", window,function(){
-    //smoothie.streamTo(document.getElementById("mycanvas"));
     smoothie.streamTo(document.getElementById("chartcanvas"), 1000 /*delay*/);
 });
 
@@ -71,34 +70,57 @@ socketio.on('disconnect', function () {
 socketio.on('object', function (data) {
 	//console.log('data');
 	//console.log(data);
-	try{
-		var msg = Message.decode(data);
+	//try{
+		//var msg = Message.decode(data);
 		//console.log("msg:" + msg.text);
-	}catch(e){}
+	//}catch(e){}
+});
+
+socketio.on('reset', function () {
+	if(wall != null){
+		wall.reset();
+	}
+});
+
+socketio.on('fire', function () {
+
 });
 
 socketio.on('obj', function (msg) {
 	var p;
 	var r;
-	var quat;
 	//console.log(typeof msg);
 	if(msg['type'] == 'ball'){
 		if(typeof ball != 'undefined'){
+
 			p = msg['p']; //position [x, y, z]
 			r = msg['r']; //rotation [x, y, z, w]
-			ball.entity.setPosition(p[0],p[1],p[2]);
-			quat = new pc.Quat(r[0],r[1],r[2],r[3]);
-			ball.entity.setRotation(quat);//warp/deform scale object
+			//ball.entity.setPosition(p[0],p[1],p[2]);
+			ball.position(new pc.Vec3(p[0],p[1],p[2]));
+			var quat = new pc.Quat(r[0],r[1],r[2],r[3]);
+			//ball.entity.setRotation(quat);//warp/deform scale object
+			ball.entity.endRot = quat.clone();
+			quat = null;
+
 		}
 	}
-
+	//console.log("???");
 	if(msg['type'] == 'block'){
 		if(typeof blocks != 'undefined'){
+
 			p = msg['p'];
 			r = msg['r'];
-			blocks[msg['id']].setPosition(p[0],p[1],p[2]);
-			quat = new pc.Quat(r[0],r[1],r[2],r[3]);
-			blocks[msg['id']].setRotation(quat);
+			//blocks[msg['id']].setPosition(p[0],p[1],p[2]);
+			var lpos = new pc.Vec3(p[0],p[1],p[2]);
+			blocks[msg['id']].lpos(lpos);
+			var quat = new pc.Quat(r[0],r[1],r[2],r[3]);
+			//if(msg['id'] == 0){
+				//console.log(quat.toString());
+			//}
+			//blocks[msg['id']].setRotation(quat);
+			blocks[msg['id']].endRot = quat.clone();
+			quat = null;
+
 		}
 	}
 	p=null;
@@ -174,8 +196,8 @@ engineio.on('open', function(){
 					blocks[parseInt(Sceneobj.id)].lpos(lpos);
 					//if(Sceneobj.id == 0){}
 					quat = new pc.Quat(Sceneobj.rx,Sceneobj.ry,Sceneobj.rz,Sceneobj.rw);
-					blocks[parseInt(Sceneobj.id)].setRotation(quat);
-					//blocks[parseInt(Sceneobj.id)].endRot = quat.clone();
+					//blocks[parseInt(Sceneobj.id)].setRotation(quat);
+					blocks[parseInt(Sceneobj.id)].endRot = quat;
 					quat = null;
 				}
 			}

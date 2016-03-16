@@ -9,6 +9,15 @@
 //=========================================================
 // Browser variable setup
 //=========================================================
+
+
+// 0 = socket.io
+// 1 = engine.io
+OBJIONetworkType = 1;
+//
+bConfigPlayCanvas = true;
+
+
 const fs = require('fs');
 const path = require('path');
 var ProtoBuf = require("protobufjs");
@@ -16,9 +25,9 @@ var ProtoBuf = require("protobufjs");
 var ByteBuffer = ProtoBuf.ByteBuffer; // ProtoBuf.js uses and also exposes ByteBuffer.js
 var Long = ProtoBuf.Long;  // as well as Long.js (not used in this example)
 
-var broadcast;
+var socketiobroadcast;
 exports.socketio_boardcast=function(obj){
-	broadcast = obj;
+	socketiobroadcast = obj;
 };
 var engineiobroadcast;
 exports.engineio_boardcast=function(obj){
@@ -26,9 +35,7 @@ exports.engineio_boardcast=function(obj){
 };
 
 // Initialize from .proto file
-var Message = ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "example.proto")).build("Message");
 var Sceneobj = new ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "sceneobj.proto")).build("Sceneobj");
-var Objectscene = new ProtoBuf.loadProtoFile(path.join(__dirname, "/public", "objectscene.proto")).build("Objectscene");
 
 console.log("playcavnas engine server side");
 window ={};
@@ -89,6 +96,7 @@ jsdom.env({
 		SetUpBrowser();
     }
 });
+
 /*
 console.log(OBJIONetworkType);
 console.log(window.location.href);
@@ -110,7 +118,6 @@ function loadJson(url, func){
     req.open("GET", url, true);
     req.send();
 }
-
 
 var CONFIG_FILENAME = 'http://127.0.0.1/config.json';
 var SCENE_PATH = "http://127.0.0.1/416604.json";
@@ -160,12 +167,6 @@ function SetUpPlayCanvas(){
 
 function InitPC(){
 	console.log('InitPC');
-
-	setInterval(function () {
-		var msg = new Message('hello world message. client');
-		broadcast('object',msg.toArrayBuffer());
-	}, 1000);
-
 	//console.log(app);
 	if(!bConfigPlayCanvas){
 		console.log("create scene");
@@ -175,8 +176,6 @@ function InitPC(){
 		CreateScene();
 		/*
 		setInterval(function () {
-			var msg = new Message('hello world message. client');
-			engineiobroadcast(msg.toArrayBuffer());
 			//msg = null;
 			var data = new Sceneobj({
 				type:"ball",
@@ -409,37 +408,46 @@ function CreateScene(){
 		n++;
 		if (n % 4 === 0){
 			wall.reset();
-			engineiobroadcast('reset');
+			if(OBJIONetworkType == 0){
+				if(typeof socketiobroadcast == 'function'){
+					socketiobroadcast('reset');
+				}
+			}
+			if(OBJIONetworkType == 1){
+				if(typeof engineiobroadcast == 'function'){
+					engineiobroadcast('reset');
+				}
+			}
+
 		}
 		if (n % 4 === 1){
 			ball.fire();
-			engineiobroadcast('fire');
+			if(OBJIONetworkType == 0){
+				if(typeof socketiobroadcast == 'function'){
+					socketiobroadcast('fire');
+				}
+			}
+			if(OBJIONetworkType == 1){
+				if(typeof engineiobroadcast == 'function'){
+					engineiobroadcast('fire');
+				}
+			}
 		}
-		//var msg = new Message('hello world message. client');
-		//engineiobroadcast(msg.toArrayBuffer());
-		//msg = null;
 
 	}, 1000);
-
-	//setInterval(function () {
-		//var msg = new Message('hello world message. client');
-		//engineio.send(msg.toArrayBuffer());
-    //}, 1000);
-
 
 	//update scene to send to clients
 	//var count = 0;
 	app.on("update", function (dt) {
 		var data;
 		ball.entity.rigidbody.syncEntityToBody();
-
 		//socket.io
 		if(OBJIONetworkType == 0){
-			if(typeof broadcast == 'function'){
+			if(typeof socketiobroadcast == 'function'){
 				//console.log('socket.io object data');
-				broadcast('obj',{type:"ball",p:[ball.entity.position.x,ball.entity.position.y,ball.entity.position.z,],r:[ball.entity.rotation.x, ball.entity.rotation.y, ball.entity.rotation.z, ball.entity.rotation.w]});
+				socketiobroadcast('obj',{type:"ball",p:[ball.entity.position.x,ball.entity.position.y,ball.entity.position.z,],r:[ball.entity.rotation.x, ball.entity.rotation.y, ball.entity.rotation.z, ball.entity.rotation.w]});
 			}else{
-				console.log('error network?');
+				//console.log('error network?');
 			}
 		}
 		//count++;
@@ -470,20 +478,18 @@ function CreateScene(){
 				engineiobroadcast(data.toArrayBuffer()); //create this function to send out each client
 				//engineiobroadcast(data); //create this function to send out each client
 			}else{
-				console.log('error network?');
+				//console.log('error network?');
 			}
 		}
-
 		for (var i = 0; i < blocks.length; i++) {
 			blocks[i].rigidbody.syncEntityToBody();
 			//socket.io
 			if(OBJIONetworkType == 0){
-				if(typeof broadcast == 'function'){
-					broadcast('obj',{type:"block",id:i,p:[blocks[i].position.x,blocks[i].position.y,blocks[i].position.z,],r:[blocks[i].rotation.x,blocks[i].rotation.y,blocks[i].rotation.z,blocks[i].rotation.w]});
+				if(typeof socketiobroadcast == 'function'){
+					socketiobroadcast('obj',{type:"block",id:i,p:[blocks[i].position.x,blocks[i].position.y,blocks[i].position.z,],r:[blocks[i].rotation.x,blocks[i].rotation.y,blocks[i].rotation.z,blocks[i].rotation.w]});
 				}
 			}
 			//engine.io
-
 			if(OBJIONetworkType == 1){
 				if(typeof engineiobroadcast == 'function'){
 					//console.log('blocks?');
@@ -504,9 +510,7 @@ function CreateScene(){
 					engineiobroadcast(data.toArrayBuffer()); //create this function to send out each client
 				}
 			}
-
 		}
-
 		data = null;
 		//rotate camera
 		camera.update(dt);

@@ -34,10 +34,8 @@ function setResolution() {
 	//}
 }
 
-var CONFIG_FILENAME = 'config.json';
-var SCENE_PATH = "416604.json";
-
 addListener("load", window,function(){
+	console.log('load?');
 	//it need to load the html to get the access to canvas
 	var canvas = document.getElementById("application-canvas");
 	// Create a PlayCanvas application
@@ -45,35 +43,6 @@ addListener("load", window,function(){
 	setResolution();
 	window.addEventListener("resize", setResolution);
 	CreateScene(pc,pc_app);
-	/*
-	pc_app.loadScene(SCENE_PATH, function (err, scene) {
-		if (err) {
-			console.error(err);
-		}
-		pc_app.start();
-	});
-	*/
-	/*
-	pc_app.configure(CONFIG_FILENAME, function (err) {
-        if (err) {
-            console.error(err);
-        }
-		pc_app.preload(function (err) {
-			if (err) {
-				console.error(err);
-			}
-			//CreateScene(pc,pc_app);
-			pc_app.loadScene(SCENE_PATH, function (err, scene) {
-				if (err) {
-					console.error(err);
-				}
-				pc_app.start();
-			});
-		});
-
-	});
-	*/
-
 });
 
 function CreateScene(pc,app){
@@ -166,8 +135,8 @@ function CreateScene(pc,app){
 			body.endRot = new pc.Quat();
 			body.progressp = 0;
 			body.progressr = 0;
-			body.durationp = 10;
-			body.durationr = 10;
+			body.durationp = 1;
+			body.durationr = 0.09;
         	body.addComponent('model', {
           		type: "box",
           		castShadows: true
@@ -197,22 +166,28 @@ function CreateScene(pc,app){
     }
 
 	Wall.prototype.update = function (dt) {
+
       	for (var i = 0; i < this.bricks.length; i++) {
 			var e = this.bricks[i];
 			e.progressp = (e.progressp || 0.0) + dt / e.durationp;
 			//update position
 			var r = new pc.Vec3();
-			r.lerp(e.getPosition(),e.end,e.progressp);
+			r.lerp(e.getPosition().clone(),e.end.clone(),e.progressp);
 			e.setPosition(r.clone());
+			r =null;
 			//update rotation
+
 			e.progressr = (e.progressr || 0.0) + dt / e.durationr;
+			//e.progressr = e.progressr + dt / 0.09;
 			var currRot = new pc.Quat(); // Preallocate and cache this so as not to allocate every frame
-			currRot.slerp(e.getRotation(), e.endRot, e.progressr); // Ramp alpha from 0 to 1 over time
-			//if(i = 0){
+			currRot.slerp(e.getRotation(), e.endRot.clone(), e.progressr); // Ramp alpha from 0 to 1 over time
+			//if(i == 0){
+				//console.log(e.progressr);
 				//console.log(currRot.toString());
 			//}
-			e.setRotation(currRot);
-
+			e.setRotation(currRot.clone());
+			currRot =null;
+			//e.setRotation(e.endRot);
       	}
     };
 
@@ -239,8 +214,8 @@ function CreateScene(pc,app){
 		e.endRot = new pc.Quat();
 		e.progressp = 0;
 		e.progressr = 0;
-		e.durationp = 10;
-		e.durationr = 10;
+		e.durationp = 1;
+		e.durationr = 0.09;
 		e.setPosition(0, -10, 0);
 		e.addComponent('model', {
 			type: "sphere",
@@ -270,18 +245,20 @@ function CreateScene(pc,app){
 
 	Ball.prototype.position = function (pos) {
 		var e = this.entity;
-		e.progress = 0; //reset counter
-		e.setPosition(e.end);
-		e.end = pos;
+		e.progressp = 0; //reset counter
+		e.setPosition(e.end.clone());
+		e.end = pos.clone();
 	};
 
 	Ball.prototype.update = function (dt) {
 		var e = this.entity;
 		var r = new pc.Vec3();
 		//update position
-		e.progressp = (e.progressp || 0.0) + dt / e.durationp;
-		r.lerp(e.getPosition(),e.end,e.progressp);
-		e.setPosition(r.clone());
+		//e.progressp = (e.progressp || 0.0) + dt / e.durationp;
+		e.progressp = (e.progressp || 0.0) + dt / 0.1;
+		r.lerp(e.getPosition().clone(),e.end.clone(),e.progressp);
+		console.log(e.progressp);
+		e.setPosition(r);
 		r = null;
 		//update rotate
 		var currRot = new pc.Quat(); // Preallocate and cache this so as not to allocate every frame
@@ -315,9 +292,6 @@ function CreateScene(pc,app){
     }, 1000);
 	*/
     // Register an update event to rotate the camera
-    //console.log(ball.entity.position.toString());
-    //console.log(ball.entity.rigidbody);
-    //console.log(ball.entity.rigidbody.entity.position.toString());
 	app.on("update", function (dt) {
 		camera.update(dt);
 		if(wall !=null){

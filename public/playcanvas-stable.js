@@ -1,11 +1,11 @@
 /*
- PlayCanvas Engine v0.181.13 revision 4f12f43
+ PlayCanvas Engine v0.181.14 revision 69d3ab8
  http://playcanvas.com
  Copyright 2011-2016 PlayCanvas Ltd. All rights reserved.
  Do not distribute.
  Contains: https://github.com/tildeio/rsvp.js - see page for license information
 */
-var pc = {version:"0.181.13", revision:"4f12f43", config:{}, common:{}, apps:{}, data:{}, unpack:function() {
+var pc = {version:"0.181.14", revision:"69d3ab8", config:{}, common:{}, apps:{}, data:{}, unpack:function() {
   console.warn("pc.unpack has been deprecated and will be removed shortly. Please update your code.")
 }, makeArray:function(arr) {
   var i, ret = [], length = arr.length;
@@ -96,6 +96,18 @@ if(!String.prototype.endsWith) {
     }
     return true
   }})
+}
+if(!String.prototype.includes) {
+  String.prototype.includes = function(search, start) {
+    if(typeof start !== "number") {
+      start = 0
+    }
+    if(start + search.length > this.length) {
+      return false
+    }else {
+      return this.indexOf(search, start) !== -1
+    }
+  }
 }
 ;(function() {
   if(typeof document === "undefined") {
@@ -4010,6 +4022,13 @@ pc.extend(pc, function() {
       this.glFilter = [gl.NEAREST, gl.LINEAR, gl.NEAREST_MIPMAP_NEAREST, gl.NEAREST_MIPMAP_LINEAR, gl.LINEAR_MIPMAP_NEAREST, gl.LINEAR_MIPMAP_LINEAR];
       this.glPrimitive = [gl.POINTS, gl.LINES, gl.LINE_LOOP, gl.LINE_STRIP, gl.TRIANGLES, gl.TRIANGLE_STRIP, gl.TRIANGLE_FAN];
       this.glType = [gl.BYTE, gl.UNSIGNED_BYTE, gl.SHORT, gl.UNSIGNED_SHORT, gl.INT, gl.UNSIGNED_INT, gl.FLOAT];
+      this.unmaskedRenderer = null;
+      this.unmaskedVendor = null;
+      this.extRendererInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      if(this.extRendererInfo) {
+        this.unmaskedRenderer = gl.getParameter(this.extRendererInfo.UNMASKED_RENDERER_WEBGL);
+        this.unmaskedVendor = gl.getParameter(this.extRendererInfo.UNMASKED_VENDOR_WEBGL)
+      }
       this.extTextureFloat = gl.getExtension("OES_texture_float");
       this.extTextureFloatLinear = gl.getExtension("OES_texture_float_linear");
       if(this.extTextureFloat) {
@@ -4139,8 +4158,9 @@ pc.extend(pc, function() {
       numUniforms -= 1;
       numUniforms -= 4 * 4;
       this.boneLimit = Math.floor(numUniforms / 4);
-      if(this.boneLimit > 110) {
-        this.boneLimit = 110
+      this.boneLimit = Math.min(this.boneLimit, 128);
+      if(this.unmaskedRenderer === "Mali-450 MP") {
+        this.boneLimit = 34
       }
       pc.events.attach(this);
       this.boundBuffer = null;
@@ -5346,6 +5366,7 @@ pc.shaderChunks.refractionPS = "uniform float material_refraction, material_refr
 pc.shaderChunks.metalnessTexConstPS = "uniform sampler2D texture_metalnessMap;\nuniform float material_metalness;\nvoid getSpecularity(inout psInternalData data) {\n    processMetalness(data, texture2D(texture_metalnessMap, $UV).$CH * material_metalness);\n}\n\n";
 pc.shaderChunks.diffuseVertPS = "void getAlbedo(inout psInternalData data) {\n    data.albedo = gammaCorrectInput(saturate(vVertexColor.$CH));\n}\n\n";
 pc.shaderChunks.particleAnimFrameLoopVS = "\n    float animFrame = floor(texCoordsAlphaLife.w * animTexParams.z);\n\n";
+pc.shaderChunks.spotPS = "float getSpotEffect(inout psInternalData data, vec3 lightSpotDirW, float lightInnerConeAngle, float lightOuterConeAngle) {\n    float cosAngle = dot(data.lightDirNormW, lightSpotDirW);\n    return smoothstep(lightOuterConeAngle, lightInnerConeAngle, cosAngle);\n}\n\n";
 pc.shaderChunks.transformInstancedVS = "mat4 getModelMatrix(inout vsInternalData data) {\n    return mat4(instance_line1, instance_line2, instance_line3, instance_line4);\n}\n\nvec4 getPosition(inout vsInternalData data) {\n    data.modelMatrix = getModelMatrix(data);\n    vec4 posW = data.modelMatrix * vec4(vertex_position, 1.0);\n    data.positionW = posW.xyz;\n    return matrix_viewProjection * posW;\n}\n\nvec3 getWorldPosition(inout vsInternalData data) {\n    return data.positionW;\n}\n\n";
 pc.shaderChunks.normalMapFloatPS = "uniform sampler2D texture_normalMap;\nuniform float material_bumpiness;\nvoid getNormal(inout psInternalData data) {\n    vec3 normalMap = unpackNormal(texture2D(texture_normalMap, $UV));\n    data.normalMap = normalMap;\n    normalMap = normalize(mix(vec3(0.0, 0.0, 1.0), normalMap, material_bumpiness));\n    data.normalW = data.TBN * normalMap;\n}\n\n";
 pc.shaderChunks.combineDiffuseSpecularOldPS = "vec3 combineColor(inout psInternalData data) {\n    return mix(data.albedo * data.diffuseLight + data.specularLight * data.specularity, data.reflection.rgb, data.reflection.a);\n}\n\n";
@@ -5354,6 +5375,7 @@ pc.shaderChunks.opacityTexPS = "uniform sampler2D texture_opacityMap;\nvoid getO
 pc.shaderChunks.emissiveTexConstPS = "uniform sampler2D texture_emissiveMap;\nuniform vec3 material_emissive;\nvec3 getEmission(inout psInternalData data) {\n    return $texture2DSAMPLE(texture_emissiveMap, $UV).$CH * material_emissive;\n}\n\n";
 pc.shaderChunks.normalVS = "vec3 getNormal(inout vsInternalData data) {\n    data.normalMatrix = matrix_normal;\n    return normalize(data.normalMatrix * vertex_normal);\n}\n\n";
 pc.shaderChunks.particle_stretchVS = "    vec3 moveDir = particleVelocity * stretch;\n    vec3 posPrev = pos - moveDir;\n    posPrev += particlePosMoved;\n\n    vec2 centerToVertexV = normalize((mat3(matrix_view) * localPos).xy);\n\n    float interpolation = dot(-velocityV, centerToVertexV) * 0.5 + 0.5;\n\n    particlePos = mix(particlePos, posPrev, interpolation);\n\n";
+pc.shaderChunks.reflDirPS = "void getReflDir(inout psInternalData data) {\n    data.reflDirW = normalize(-reflect(data.viewDirW, data.normalW));\n}\n\n";
 pc.shaderChunks.skyboxHDRPS = "varying vec3 vViewDir;\nuniform samplerCube texture_cubeMap;\n\nvoid main(void) {\n    vec3 color = processEnvironment($textureCubeSAMPLE(texture_cubeMap, fixSeamsStatic(vViewDir, $FIXCONST)).rgb);\n    color = toneMap(color);\n    color = gammaCorrectOutput(color);\n    gl_FragColor = vec4(color, 1.0);\n}\n\n";
 pc.shaderChunks.reflectionPrefilteredCubeLodPS = "#extension GL_EXT_shader_texture_lod : enable\n\nuniform samplerCube texture_prefilteredCubeMap128;\nuniform float material_reflectivity;\n\nvoid addReflection(inout psInternalData data) {\n\n    float bias = saturate(1.0 - data.glossiness) * 5.0; // multiply by max mip level\n    vec3 fixedReflDir = fixSeams(cubeMapProject(data.reflDirW), bias);\n    fixedReflDir.x *= -1.0;\n\n    vec3 refl = processEnvironment($DECODE( textureCubeLodEXT(texture_prefilteredCubeMap128, fixedReflDir, bias) ).rgb);\n\n    data.reflection += vec4(refl, material_reflectivity);\n}\n\n";
 pc.shaderChunks.reflectionSpherePS = "uniform mat4 matrix_view;\nuniform sampler2D texture_sphereMap;\nuniform float material_reflectivity;\nvoid addReflection(inout psInternalData data) {\n\n    vec3 reflDirV = (mat3(matrix_view) * data.reflDirW).xyz;\n\n    float m = 2.0 * sqrt( dot(reflDirV.xy, reflDirV.xy) + (reflDirV.z+1.0)*(reflDirV.z+1.0) );\n    vec2 sphereMapUv = reflDirV.xy / m + 0.5;\n\n    data.reflection += vec4($texture2DSAMPLE(texture_sphereMap, sphereMapUv).rgb, material_reflectivity);\n}\n\n\n";
@@ -5363,9 +5385,10 @@ pc.shaderChunks.shadowVSPS = "\nfloat getShadowHardVS(inout psInternalData data,
 pc.shaderChunks.particle_lambertPS = "\n    vec3 negNormal = max(normal, vec3(0.0));\n    vec3 posNormal = max(-normal, vec3(0.0));\n\n\n";
 pc.shaderChunks.viewNormalVS = "\nuniform mat4 matrix_view;\nvec3 getViewNormal(inout vsInternalData data) {\n    return mat3(matrix_view) * vNormalW;\n}\n";
 pc.shaderChunks.packDepthPS = "// Packing a float in GLSL with multiplication and mod\n// http://blog.gradientstudios.com/2012/08/23/shadow-map-improvement\nvec4 packFloat(float depth) {\n    const vec4 bit_shift = vec4(256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0);\n    const vec4 bit_mask  = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);\n\n    // combination of mod and multiplication and division works better\n    vec4 res = mod(depth * bit_shift * vec4(255), vec4(256) ) / vec4(255);\n    res -= res.xxyz * bit_mask;\n    return res;\n}\n\n\n";
-pc.shaderChunks.basePS = "\nuniform vec3 view_position;\n\nuniform vec3 light_globalAmbient;\n\nstruct psInternalData {\n    vec3 albedo;\n    vec3 specularity;\n    float glossiness;\n    vec3 emission;\n    vec3 normalW;\n    mat3 TBN;\n    vec3 viewDirW;\n    vec3 reflDirW;\n    vec3 diffuseLight;\n    vec3 specularLight;\n    vec4 reflection;\n    float alpha;\n    vec3 lightDirNormW;\n    vec3 lightDirW;\n    vec3 lightPosW;\n    float atten;\n    vec3 shadowCoord;\n    vec2 uvOffset;\n    vec3 normalMap;\n    float ao;\n};\n\nvoid getViewDir(inout psInternalData data) {\n    data.viewDirW = normalize(view_position - vPositionW);\n}\n\nvoid getReflDir(inout psInternalData data) {\n    data.reflDirW = normalize(-reflect(data.viewDirW, data.normalW));\n}\n\nvoid getLightDirPoint(inout psInternalData data, vec3 lightPosW) {\n    data.lightDirW = vPositionW - lightPosW;\n    data.lightDirNormW = normalize(data.lightDirW);\n    data.lightPosW = lightPosW;\n}\n\nfloat getFalloffLinear(inout psInternalData data, float lightRadius) {\n    float d = length(data.lightDirW);\n    return max(((lightRadius - d) / lightRadius), 0.0);\n}\n\nfloat square(float x) {\n    return x*x;\n}\n\nfloat saturate(float x) {\n    return clamp(x, 0.0, 1.0);\n}\n\nvec3 saturate(vec3 x) {\n    return clamp(x, vec3(0.0), vec3(1.0));\n}\n\nfloat getFalloffInvSquared(inout psInternalData data, float lightRadius) {\n    float sqrDist = dot(data.lightDirW, data.lightDirW);\n    float falloff = 1.0 / (sqrDist + 1.0);\n    float invRadius = 1.0 / lightRadius;\n\n    falloff *= 16.0;\n    falloff *= square( saturate( 1.0 - square( sqrDist * square(invRadius) ) ) );\n\n    return falloff;\n}\n\nfloat getSpotEffect(inout psInternalData data, vec3 lightSpotDirW, float lightInnerConeAngle, float lightOuterConeAngle) {\n    float cosAngle = dot(data.lightDirNormW, lightSpotDirW);\n    return smoothstep(lightOuterConeAngle, lightInnerConeAngle, cosAngle);\n}\n\nvoid processMetalness(inout psInternalData data, float metalness) {\n    const float dielectricF0 = 0.04;\n    data.specularity = mix(vec3(dielectricF0), data.albedo, metalness);\n    data.albedo *= 1.0 - metalness;\n}\n\n";
+pc.shaderChunks.basePS = "\nuniform vec3 view_position;\n\nuniform vec3 light_globalAmbient;\n\nfloat square(float x) {\n    return x*x;\n}\n\nfloat saturate(float x) {\n    return clamp(x, 0.0, 1.0);\n}\n\nvec3 saturate(vec3 x) {\n    return clamp(x, vec3(0.0), vec3(1.0));\n}\n\n";
 pc.shaderChunks.dpAtlasQuadPS = "varying vec2 vUv0;\nuniform sampler2D source;\nuniform vec4 params;\n\nvoid main(void) {\n    vec2 uv = vUv0;\n    uv = uv * 2.0 - vec2(1.0);\n    uv *= params.xy;\n    uv = uv * 0.5 + 0.5;\n    gl_FragColor = texture2D(source, uv);\n}\n";
 pc.shaderChunks.fullscreenQuadPS = "varying vec2 vUv0;\nuniform sampler2D source;\n\nvoid main(void) {\n    gl_FragColor = texture2D(source, vUv0);\n}\n";
+pc.shaderChunks.lightDirPointPS = "void getLightDirPoint(inout psInternalData data, vec3 lightPosW) {\n    data.lightDirW = vPositionW - lightPosW;\n    data.lightDirNormW = normalize(data.lightDirW);\n    data.lightPosW = lightPosW;\n}\n\n";
 pc.shaderChunks.transformSkinnedVS = "mat4 getModelMatrix(inout vsInternalData data) {\n    return getBoneMatrix(vertex_boneIndices.x) * vertex_boneWeights.x +\n           getBoneMatrix(vertex_boneIndices.y) * vertex_boneWeights.y +\n           getBoneMatrix(vertex_boneIndices.z) * vertex_boneWeights.z +\n           getBoneMatrix(vertex_boneIndices.w) * vertex_boneWeights.w;\n}\n\nvec4 getPosition(inout vsInternalData data) {\n    data.modelMatrix = getModelMatrix(data);\n    vec4 posW = data.modelMatrix * vec4(vertex_position, 1.0);\n    //posW.xyz /= posW.w;\n    posW.xyz += skinPosOffset;\n    data.positionW = posW.xyz;// / posW.w;\n    return matrix_viewProjection * posW;\n}\n\nvec3 getWorldPosition(inout vsInternalData data) {\n    return data.positionW;\n}\n\n";
 pc.shaderChunks.particle_lightingPS = "\n    vec3 light = negNormal.x*lightCube[0] + posNormal.x*lightCube[1] +\n                        negNormal.y*lightCube[2] + posNormal.y*lightCube[3] +\n                        negNormal.z*lightCube[4] + posNormal.z*lightCube[5];\n\n\n    rgb *= light;\n\n\n";
 pc.shaderChunks.particle_blendMultiplyPS = "\n    rgb = mix(vec3(1.0), rgb, vec3(a));\n    if (rgb.r + rgb.g + rgb.b > 2.99) discard;\n\n";
@@ -5374,6 +5397,7 @@ pc.shaderChunks.particleUpdaterEndPS = "\n   tex = vec4(outPosition, (outRotatio
 pc.shaderChunks.extensionVS = "\n";
 pc.shaderChunks.skyboxPrefilteredCubePS = "varying vec3 vViewDir;\nuniform samplerCube texture_cubeMap;\n\nvec3 fixSeamsStretch(vec3 vec, float mipmapIndex, float cubemapSize) {\n    float scale = 1.0 - exp2(mipmapIndex) / cubemapSize;\n    float M = max(max(abs(vec.x), abs(vec.y)), abs(vec.z));\n    if (abs(vec.x) != M) vec.x *= scale;\n    if (abs(vec.y) != M) vec.y *= scale;\n    if (abs(vec.z) != M) vec.z *= scale;\n    return vec;\n}\n\nvoid main(void) {\n    vec3 color = textureCubeRGBM(texture_cubeMap, fixSeamsStretch(vViewDir, 0.0, 128.0));\n    color = toneMap(color);\n    color = gammaCorrectOutput(color);\n    gl_FragColor = vec4(color, 1.0);\n}\n\n";
 pc.shaderChunks.particle_normalMapPS = "\n    vec3 normalMap         = normalize( texture2D(normalMap, texCoordsAlphaLife.xy).xyz * 2.0 - 1.0 );\n    vec3 normal = ParticleMat * normalMap;\n\n\n\n\n";
+pc.shaderChunks.metalnessPS = "void processMetalness(inout psInternalData data, float metalness) {\n    const float dielectricF0 = 0.04;\n    data.specularity = mix(vec3(dielectricF0), data.albedo, metalness);\n    data.albedo *= 1.0 - metalness;\n}\n\n";
 pc.shaderChunks.aoSpecOccConstSimplePS = "void occludeSpecular(inout psInternalData data) {\n    float specOcc = data.ao;\n    data.specularLight *= specOcc;\n    data.reflection *= specOcc;\n}\n\n";
 pc.shaderChunks.particleVS = "attribute vec4 particle_vertexData; // XYZ = particle position, W = particle ID + random factor\n\nuniform mat4 matrix_viewProjection;\nuniform mat4 matrix_model;\nuniform mat3 matrix_normal;\nuniform mat4 matrix_viewInverse;\nuniform mat4 matrix_view;\n\nuniform float numParticles, numParticlesPot;\nuniform float graphSampleSize;\nuniform float graphNumSamples;\nuniform float stretch;\nuniform vec3 wrapBounds;\nuniform vec3 emitterScale;\nuniform float rate, rateDiv, lifetime, deltaRandomnessStatic, scaleDivMult, alphaDivMult, seed;\nuniform sampler2D particleTexOUT, particleTexIN;\nuniform sampler2D internalTex0;\nuniform sampler2D internalTex1;\nuniform sampler2D internalTex2;\n\nvarying vec4 texCoordsAlphaLife;\n\nvec3 unpack3NFloats(float src) {\n    float r = fract(src);\n    float g = fract(src * 256.0);\n    float b = fract(src * 65536.0);\n    return vec3(r, g, b);\n}\n\nfloat saturate(float x) {\n    return clamp(x, 0.0, 1.0);\n}\n\nvec4 tex1Dlod_lerp(sampler2D tex, vec2 tc) {\n    return mix( texture2D(tex,tc), texture2D(tex,tc + graphSampleSize), fract(tc.x*graphNumSamples) );\n}\n\nvec4 tex1Dlod_lerp(sampler2D tex, vec2 tc, out vec3 w) {\n    vec4 a = texture2D(tex,tc);\n    vec4 b = texture2D(tex,tc + graphSampleSize);\n    float c = fract(tc.x*graphNumSamples);\n\n    vec3 unpackedA = unpack3NFloats(a.w);\n    vec3 unpackedB = unpack3NFloats(b.w);\n    w = mix(unpackedA, unpackedB, c);\n\n    return mix(a, b, c);\n}\n\n\nvec2 rotate(vec2 quadXY, float pRotation, out mat2 rotMatrix) {\n    float c = cos(pRotation);\n    float s = sin(pRotation);\n\n    mat2 m = mat2(c, -s, s, c);\n    rotMatrix = m;\n\n    return m * quadXY;\n}\n\nvec3 billboard(vec3 InstanceCoords, vec2 quadXY, out mat3 localMat) {\n    vec3 viewUp = matrix_viewInverse[1].xyz;\n    vec3 posCam = matrix_viewInverse[3].xyz;\n\n    mat3 billMat;\n    billMat[2] = normalize(InstanceCoords - posCam);\n    billMat[0] = normalize(cross(viewUp, billMat[2]));\n    billMat[1] = -viewUp;\n    vec3 pos = billMat * vec3(quadXY, 0);\n\n    localMat = billMat;\n\n    return pos;\n}\n\nvoid main(void) {\n    vec3 meshLocalPos = particle_vertexData.xyz;\n    float id = floor(particle_vertexData.w);\n\n    float rndFactor = fract(sin(id + 1.0 + seed));\n    vec3 rndFactor3 = vec3(rndFactor, fract(rndFactor*10.0), fract(rndFactor*100.0));\n\n    vec4 particleTex = texture2D(particleTexOUT, vec2(id / numParticlesPot, 0.125));\n    vec3 pos = particleTex.xyz;\n    float angle = (particleTex.w < 0.0? -particleTex.w : particleTex.w) - 1000.0;\n    bool hide = particleTex.w < 0.0;\n\n    vec4 particleTex2 = texture2D(particleTexOUT, vec2(id / numParticlesPot, 0.375));\n    vec3 particleVelocity = particleTex2.xyz;\n    vec2 velocityV = normalize((mat3(matrix_view) * particleVelocity).xy); // should be removed by compiler if align/stretch is not used\n    float life = particleTex2.w;\n\n    float particleLifetime = lifetime;\n\n    if (life <= 0.0 || life > particleLifetime || hide) meshLocalPos = vec3(0.0);\n    vec2 quadXY = meshLocalPos.xy;\n    float nlife = clamp(life / particleLifetime, 0.0, 1.0);\n\n    vec3 paramDiv;\n    vec4 params = tex1Dlod_lerp(internalTex2, vec2(nlife, 0), paramDiv);\n    float scale = params.y;\n    float scaleDiv = paramDiv.x;\n    float alphaDiv = paramDiv.z;\n\n    scale += (scaleDiv * 2.0 - 1.0) * scaleDivMult * fract(rndFactor*10000.0);\n\n    texCoordsAlphaLife = vec4(quadXY * -0.5 + 0.5,    (alphaDiv * 2.0 - 1.0) * alphaDivMult * fract(rndFactor*1000.0),    nlife);\n\n    vec3 particlePos = pos;\n    vec3 particlePosMoved = vec3(0.0);\n\n    mat2 rotMatrix;\n    mat3 localMat;\n\n\n";
 pc.shaderChunks.normalXYPS = "vec3 unpackNormal(vec4 nmap) {\n    vec3 normal;\n    normal.xy = nmap.wy * 2.0 - 1.0;\n    normal.z = sqrt(1.0 - saturate(dot(normal.xy, normal.xy)));\n    return normal;\n}\n\n";
@@ -5444,10 +5468,12 @@ pc.shaderChunks.glossTexPS = "uniform sampler2D texture_glossMap;\nvoid getGloss
 pc.shaderChunks.combineDiffuseSpecularNoReflPS = "vec3 combineColor(inout psInternalData data) {\n    return data.albedo * data.diffuseLight + data.specularLight * data.specularity;\n}\n\n";
 pc.shaderChunks.particle_meshVS = "\n    vec3 localPos = meshLocalPos;\n    localPos.xy = rotate(localPos.xy, angle, rotMatrix);\n    localPos.yz = rotate(localPos.yz, angle, rotMatrix);\n\n    billboard(particlePos, quadXY, localMat);\n\n\n";
 pc.shaderChunks.particle_endPS = "    rgb = addFog(data, rgb);\n    rgb = toneMap(rgb);\n    rgb = gammaCorrectOutput(rgb);\n    gl_FragColor = vec4(rgb, a);\n}\n";
+pc.shaderChunks.viewDirPS = "void getViewDir(inout psInternalData data) {\n    data.viewDirW = normalize(view_position - vPositionW);\n}\n\n";
 pc.shaderChunks.shadowCoordPS = "void _getShadowCoordOrtho(inout psInternalData data, mat4 shadowMatrix, vec3 shadowParams, vec3 wPos) {\n    vec4 projPos = shadowMatrix * vec4(wPos, 1.0);\n    projPos.z += shadowParams.z;\n    projPos.z = min(projPos.z, 1.0);\n    data.shadowCoord = projPos.xyz;\n}\n\nvoid _getShadowCoordPersp(inout psInternalData data, mat4 shadowMatrix, vec4 shadowParams, vec3 wPos) {\n    vec4 projPos = shadowMatrix * vec4(wPos, 1.0);\n    projPos.xyz /= projPos.w;\n    projPos.z += shadowParams.z;\n    data.shadowCoord = projPos.xyz;\n}\n\nvoid getShadowCoordOrtho(inout psInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    _getShadowCoordOrtho(data, shadowMatrix, shadowParams, vPositionW);\n}\n\nvoid getShadowCoordPersp(inout psInternalData data, mat4 shadowMatrix, vec4 shadowParams) {\n    _getShadowCoordPersp(data, shadowMatrix, shadowParams, vPositionW);\n}\n\nvoid getShadowCoordPerspNormalOffset(inout psInternalData data, mat4 shadowMatrix, vec4 shadowParams) {\n    float distScale = abs(dot(vPositionW - data.lightPosW, data.lightDirNormW)); // fov?\n    vec3 wPos = vPositionW + vNormalW * shadowParams.y * clamp(1.0 - dot(vNormalW, -data.lightDirNormW), 0.0, 1.0) * distScale;\n\n    _getShadowCoordPersp(data, shadowMatrix, shadowParams, wPos);\n}\n\nvoid getShadowCoordOrthoNormalOffset(inout psInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    vec3 wPos = vPositionW + vNormalW * shadowParams.y * clamp(1.0 - dot(vNormalW, -data.lightDirNormW), 0.0, 1.0); //0.08\n\n    _getShadowCoordOrtho(data, shadowMatrix, shadowParams, wPos);\n}\n\n";
 pc.shaderChunks.fullscreenQuadVS = "attribute vec2 aPosition;\n\nvarying vec2 vUv0;\n\nvoid main(void)\n{\n    gl_Position = vec4(aPosition, 0.5, 1.0);\n    vUv0 = aPosition.xy*0.5+0.5;\n}\n\n";
 pc.shaderChunks.extensionPS = "\n";
 pc.shaderChunks.particlePS = "varying vec4 texCoordsAlphaLife;\n\nuniform sampler2D colorMap;\nuniform sampler2D internalTex3;\nuniform float graphSampleSize;\nuniform float graphNumSamples;\nuniform float camera_far;\nuniform float softening;\nuniform float colorMult;\n\nfloat saturate(float x) {\n    return clamp(x, 0.0, 1.0);\n}\n\nfloat unpackFloat(vec4 rgbaDepth) {\n    const vec4 bitShift = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);\n    float depth = dot(rgbaDepth, bitShift);\n    return depth;\n}\n\nvoid main(void) {\n    psInternalData data;\n    vec4 tex         = texture2DSRGB(colorMap, texCoordsAlphaLife.xy);\n    vec4 ramp     = texture2DSRGB(internalTex3, vec2(texCoordsAlphaLife.w, 0.0));\n    ramp.rgb *= colorMult;\n\n    ramp.a += texCoordsAlphaLife.z;\n\n    vec3 rgb =     tex.rgb * ramp.rgb;\n    float a =         tex.a * ramp.a;\n\n";
+pc.shaderChunks.falloffLinearPS = "float getFalloffLinear(inout psInternalData data, float lightRadius) {\n    float d = length(data.lightDirW);\n    return max(((lightRadius - d) / lightRadius), 0.0);\n}\n\n";
 pc.shaderChunks.lightSpecularBlinnPS = "// Energy-conserving (hopefully) Blinn-Phong\nfloat getLightSpecular(inout psInternalData data) {\n    vec3 h = normalize( -data.lightDirNormW + data.viewDirW );\n    float nh = max( dot( h, data.normalW ), 0.0 );\n\n    float specPow = exp2(data.glossiness * 11.0); // glossiness is linear, power is not; 0 - 2048\n    specPow = antiAliasGlossiness(data, specPow);\n\n    // Hack: On Mac OS X, calling pow with zero for the exponent generates hideous artifacts so bias up a little\n    specPow = max(specPow, 0.0001);\n\n    return pow(nh, specPow) * (specPow + 2.0) / 8.0;\n}\n\n";
 pc.shaderChunks.shadowCoordVS = "void getLightDirPoint(inout vsInternalData data, vec3 lightPosW) {\n    vec3 lightDirW = vPositionW - lightPosW;\n    data.lightDirNormW = normalize(lightDirW);\n    data.lightPosW = lightPosW;\n}\n\nvoid _getShadowCoordOrtho(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams, vec3 wPos) {\n    vec4 projPos = shadowMatrix * vec4(wPos, 1.0);\n    vMainShadowUv = projPos;\n}\n\nvoid _getShadowCoordPersp(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams, vec3 wPos) {\n    vec4 projPos = shadowMatrix * vec4(wPos, 1.0);\n    vMainShadowUv = projPos;\n}\n\nvoid getShadowCoordOrtho(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    _getShadowCoordOrtho(data, shadowMatrix, shadowParams, vPositionW);\n}\n\nvoid getShadowCoordPersp(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    _getShadowCoordPersp(data, shadowMatrix, shadowParams, vPositionW);\n}\n\nvoid getShadowCoordPerspNormalOffset(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    float distScale = abs(dot(vPositionW - data.lightPosW, data.lightDirNormW)); // fov?\n    vec3 wPos = vPositionW + data.normalW * shadowParams.y * clamp(1.0 - dot(data.normalW, -data.lightDirNormW), 0.0, 1.0) * distScale;\n\n    _getShadowCoordPersp(data, shadowMatrix, shadowParams, wPos);\n}\n\nvoid getShadowCoordOrthoNormalOffset(inout vsInternalData data, mat4 shadowMatrix, vec3 shadowParams) {\n    vec3 wPos = vPositionW + data.normalW * shadowParams.y * clamp(1.0 - dot(data.normalW, -data.lightDirNormW), 0.0, 1.0); //0.08\n\n    _getShadowCoordOrtho(data, shadowMatrix, shadowParams, wPos);\n}\n\n";
 pc.shaderChunks.rgbmPS = "vec3 decodeRGBM(vec4 rgbm) {\n    vec3 color = (8.0 * rgbm.a) * rgbm.rgb;\n    return color * color;\n}\n\nvec3 texture2DRGBM(sampler2D tex, vec2 uv) {\n    return decodeRGBM(texture2D(tex, uv));\n}\n\nvec3 textureCubeRGBM(samplerCube tex, vec3 uvw) {\n    return decodeRGBM(textureCube(tex, uvw));\n}\n\n";
@@ -5472,6 +5498,7 @@ pc.shaderChunks.diffuseVertConstPS = "uniform vec3 material_diffuse;\nvoid getAl
 pc.shaderChunks.shadowPS = "// ----- Unpacking -----\n\nfloat unpackFloat(vec4 rgbaDepth) {\n    const vec4 bitShift = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);\n    return dot(rgbaDepth, bitShift);\n}\n\nfloat unpackMask(vec4 rgbaDepth) {\n    return rgbaDepth.x;\n}\n\nfloat unpackFloatYZW(vec4 enc) {\n    const vec4 bitShift = vec4(1.0 / (256.0 * 256.0 * 256.0), 1.0 / (256.0 * 256.0), 1.0 / 256.0, 1.0);\n    float v = dot(enc.yzw, bitShift.yzw);\n    return v;\n}\n\n\n// ----- Aux -----\n\nvec3 lessThan2(vec3 a, vec3 b) {\n    return clamp((b - a)*1000.0, 0.0, 1.0); // softer version\n}\n\nvec3 greaterThan2(vec3 a, vec3 b) {\n    return clamp((a - b)*1000.0, 0.0, 1.0); // softer version\n}\n\n\n// ----- Direct/Spot Sampling -----\n\nfloat getShadowHard(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    float depth = unpackFloat(texture2D(shadowMap, data.shadowCoord.xy));\n    return (depth < data.shadowCoord.z) ? 0.0 : 1.0;\n}\n\nfloat getShadowSpotHard(inout psInternalData data, sampler2D shadowMap, vec4 shadowParams) {\n    float depth = unpackFloat(texture2D(shadowMap, data.shadowCoord.xy));\n    return (depth < (length(data.lightDirW) * shadowParams.w + shadowParams.z)) ? 0.0 : 1.0;\n}\n\nfloat getShadowMask(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    return unpackMask(texture2D(shadowMap, data.shadowCoord.xy));\n}\n\nfloat _xgetShadowPCF3x3(mat3 depthKernel, inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    mat3 shadowKernel;\n    vec3 shadowCoord = data.shadowCoord;\n    vec3 shadowZ = vec3(shadowCoord.z);\n    shadowKernel[0] = vec3(greaterThan(depthKernel[0], shadowZ));\n    shadowKernel[1] = vec3(greaterThan(depthKernel[1], shadowZ));\n    shadowKernel[2] = vec3(greaterThan(depthKernel[2], shadowZ));\n\n    vec2 fractionalCoord = fract( shadowCoord.xy * shadowParams.x );\n\n    shadowKernel[0] = mix(shadowKernel[0], shadowKernel[1], fractionalCoord.x);\n    shadowKernel[1] = mix(shadowKernel[1], shadowKernel[2], fractionalCoord.x);\n\n    vec4 shadowValues;\n    shadowValues.x = mix(shadowKernel[0][0], shadowKernel[0][1], fractionalCoord.y);\n    shadowValues.y = mix(shadowKernel[0][1], shadowKernel[0][2], fractionalCoord.y);\n    shadowValues.z = mix(shadowKernel[1][0], shadowKernel[1][1], fractionalCoord.y);\n    shadowValues.w = mix(shadowKernel[1][1], shadowKernel[1][2], fractionalCoord.y);\n\n    return dot( shadowValues, vec4( 1.0 ) ) * 0.25;\n}\n\nfloat _getShadowPCF3x3(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    vec3 shadowCoord = data.shadowCoord;\n\n    float xoffset = 1.0 / shadowParams.x; // 1/shadow map width\n    float dx0 = -xoffset;\n    float dx1 = xoffset;\n\n    mat3 depthKernel;\n    depthKernel[0][0] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, dx0)));\n    depthKernel[0][1] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, 0.0)));\n    depthKernel[0][2] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, dx1)));\n    depthKernel[1][0] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(0.0, dx0)));\n    depthKernel[1][1] = unpackFloat(texture2D(shadowMap, shadowCoord.xy));\n    depthKernel[1][2] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(0.0, dx1)));\n    depthKernel[2][0] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, dx0)));\n    depthKernel[2][1] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, 0.0)));\n    depthKernel[2][2] = unpackFloat(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, dx1)));\n\n    return _xgetShadowPCF3x3(depthKernel, data, shadowMap, shadowParams);\n}\n\nfloat getShadowPCF3x3(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    return _getShadowPCF3x3(data, shadowMap, shadowParams);\n}\n\nfloat getShadowSpotPCF3x3(inout psInternalData data, sampler2D shadowMap, vec4 shadowParams) {\n    data.shadowCoord.z = length(data.lightDirW) * shadowParams.w + shadowParams.z;\n    return _getShadowPCF3x3(data, shadowMap, shadowParams.xyz);\n}\n\nfloat _getShadowPCF3x3_YZW(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    vec3 shadowCoord = data.shadowCoord;\n\n    float xoffset = 1.0 / shadowParams.x; // 1/shadow map width\n    float dx0 = -xoffset;\n    float dx1 = xoffset;\n\n    mat3 depthKernel;\n    depthKernel[0][0] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, dx0)));\n    depthKernel[0][1] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, 0.0)));\n    depthKernel[0][2] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx0, dx1)));\n    depthKernel[1][0] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(0.0, dx0)));\n    depthKernel[1][1] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy));\n    depthKernel[1][2] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(0.0, dx1)));\n    depthKernel[2][0] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, dx0)));\n    depthKernel[2][1] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, 0.0)));\n    depthKernel[2][2] = unpackFloatYZW(texture2D(shadowMap, shadowCoord.xy + vec2(dx1, dx1)));\n\n    return _xgetShadowPCF3x3(depthKernel, data, shadowMap, shadowParams);\n}\n\nfloat getShadowPCF3x3_YZW(inout psInternalData data, sampler2D shadowMap, vec3 shadowParams) {\n    return _getShadowPCF3x3_YZW(data, shadowMap, shadowParams);\n}\n\n\n// ----- Point Sampling -----\n\nfloat getShadowPointHard(inout psInternalData data, samplerCube shadowMap, vec4 shadowParams) {\n    float depth = unpackFloat(textureCube(shadowMap, data.lightDirNormW));\n    return float(depth > length(data.lightDirW) * shadowParams.w + shadowParams.z);\n}\n\nfloat _getShadowPoint(inout psInternalData data, samplerCube shadowMap, vec4 shadowParams, vec3 dir) {\n\n    vec3 tc = normalize(dir);\n    vec3 tcAbs = abs(tc);\n\n    vec4 dirX = vec4(1,0,0, tc.x);\n    vec4 dirY = vec4(0,1,0, tc.y);\n    float majorAxisLength = tc.z;\n    if ((tcAbs.x > tcAbs.y) && (tcAbs.x > tcAbs.z)) {\n        dirX = vec4(0,0,1, tc.z);\n        dirY = vec4(0,1,0, tc.y);\n        majorAxisLength = tc.x;\n    } else if ((tcAbs.y > tcAbs.x) && (tcAbs.y > tcAbs.z)) {\n        dirX = vec4(1,0,0, tc.x);\n        dirY = vec4(0,0,1, tc.z);\n        majorAxisLength = tc.y;\n    }\n\n    float shadowParamsInFaceSpace = ((1.0/shadowParams.x) * 2.0) * abs(majorAxisLength);\n\n    vec3 xoffset = (dirX.xyz * shadowParamsInFaceSpace);\n    vec3 yoffset = (dirY.xyz * shadowParamsInFaceSpace);\n    vec3 dx0 = -xoffset;\n    vec3 dy0 = -yoffset;\n    vec3 dx1 = xoffset;\n    vec3 dy1 = yoffset;\n\n    mat3 shadowKernel;\n    mat3 depthKernel;\n\n    depthKernel[0][0] = unpackFloat(textureCube(shadowMap, tc + dx0 + dy0));\n    depthKernel[0][1] = unpackFloat(textureCube(shadowMap, tc + dx0));\n    depthKernel[0][2] = unpackFloat(textureCube(shadowMap, tc + dx0 + dy1));\n    depthKernel[1][0] = unpackFloat(textureCube(shadowMap, tc + dy0));\n    depthKernel[1][1] = unpackFloat(textureCube(shadowMap, tc));\n    depthKernel[1][2] = unpackFloat(textureCube(shadowMap, tc + dy1));\n    depthKernel[2][0] = unpackFloat(textureCube(shadowMap, tc + dx1 + dy0));\n    depthKernel[2][1] = unpackFloat(textureCube(shadowMap, tc + dx1));\n    depthKernel[2][2] = unpackFloat(textureCube(shadowMap, tc + dx1 + dy1));\n\n    vec3 shadowZ = vec3(length(dir) * shadowParams.w + shadowParams.z);\n\n    shadowKernel[0] = vec3(lessThan2(depthKernel[0], shadowZ));\n    shadowKernel[1] = vec3(lessThan2(depthKernel[1], shadowZ));\n    shadowKernel[2] = vec3(lessThan2(depthKernel[2], shadowZ));\n\n    vec2 uv = (vec2(dirX.w, dirY.w) / abs(majorAxisLength)) * 0.5;\n\n    vec2 fractionalCoord = fract( uv * shadowParams.x );\n\n    shadowKernel[0] = mix(shadowKernel[0], shadowKernel[1], fractionalCoord.x);\n    shadowKernel[1] = mix(shadowKernel[1], shadowKernel[2], fractionalCoord.x);\n\n    vec4 shadowValues;\n    shadowValues.x = mix(shadowKernel[0][0], shadowKernel[0][1], fractionalCoord.y);\n    shadowValues.y = mix(shadowKernel[0][1], shadowKernel[0][2], fractionalCoord.y);\n    shadowValues.z = mix(shadowKernel[1][0], shadowKernel[1][1], fractionalCoord.y);\n    shadowValues.w = mix(shadowKernel[1][1], shadowKernel[1][2], fractionalCoord.y);\n\n    return 1.0 - dot( shadowValues, vec4( 1.0 ) ) * 0.25;\n}\n\nfloat getShadowPointPCF3x3(inout psInternalData data, samplerCube shadowMap, vec4 shadowParams) {\n    return _getShadowPoint(data, shadowMap, shadowParams, data.lightDirW);\n}\n\nvoid normalOffsetPointShadow(inout psInternalData data, vec4 shadowParams) {\n    float distScale = length(data.lightDirW);\n    vec3 wPos = vPositionW + vNormalW * shadowParams.y * clamp(1.0 - dot(vNormalW, -data.lightDirNormW), 0.0, 1.0) * distScale; //0.02\n    vec3 dir = wPos - data.lightPosW;\n    data.lightDirW = dir;\n}\n\n";
 pc.shaderChunks.aoSpecOccSimplePS = "uniform float material_occludeSpecularIntensity;\nvoid occludeSpecular(inout psInternalData data) {\n    float specOcc = mix(1.0, data.ao, material_occludeSpecularIntensity);\n    data.specularLight *= specOcc;\n    data.reflection *= specOcc;\n}\n\n";
 pc.shaderChunks.TBNPS = "void getTBN(inout psInternalData data) {\n    data.TBN = mat3(normalize(vTangentW), normalize(vBinormalW), normalize(vNormalW));\n}\n\n";
+pc.shaderChunks.falloffInvSquaredPS = "float getFalloffInvSquared(inout psInternalData data, float lightRadius) {\n    float sqrDist = dot(data.lightDirW, data.lightDirW);\n    float falloff = 1.0 / (sqrDist + 1.0);\n    float invRadius = 1.0 / lightRadius;\n\n    falloff *= 16.0;\n    falloff *= square( saturate( 1.0 - square( sqrDist * square(invRadius) ) ) );\n\n    return falloff;\n}\n\n";
 pc.shaderChunks.particle_halflambertPS = "\n    vec3 negNormal = normal*0.5+0.5;\n    vec3 posNormal = -normal*0.5+0.5;\n    negNormal *= negNormal;\n    posNormal *= posNormal;\n\n\n";
 pc.shaderChunks.combineDiffusePS = "vec3 combineColor(inout psInternalData data) {\n    return data.albedo * data.diffuseLight;\n}\n\n";
 pc.shaderChunks.particleUpdaterInitPS = "varying vec2 vUv0;\n\nuniform sampler2D particleTexIN;\nuniform sampler2D internalTex0;\nuniform sampler2D internalTex1;\nuniform sampler2D internalTex2;\n\nuniform mat3 emitterMatrix;\nuniform vec3 emitterScale;\n\nuniform vec3 emitterPos, frameRandom, localVelocityDivMult, velocityDivMult;\nuniform float delta, rate, rateDiv, lifetime, numParticles, rotSpeedDivMult, seed;\nuniform float startAngle, startAngle2;\nuniform float initialVelocity;\n\nuniform float graphSampleSize;\nuniform float graphNumSamples;\n\n";
@@ -6335,6 +6362,8 @@ pc.programlib.phong = {hashCode:function(str) {
   }
   code += varyings;
   code += chunks.basePS;
+  var codeBegin = code;
+  code = "";
   var numShadowLights = 0;
   for(i = 0;i < options.lights.length;i++) {
     lightType = options.lights[i].getType();
@@ -6422,6 +6451,9 @@ pc.programlib.phong = {hashCode:function(str) {
     }else {
       code += chunks.specularAaNonePS
     }
+    if(options.useMetalness) {
+      code += chunks.metalnessPS
+    }
     code += this._addMap(options.useMetalness ? "metalness" : "specular", options, chunks, uvOffset);
     code += this._addMap("gloss", options, chunks, uvOffset);
     if(options.fresnelModel > 0) {
@@ -6504,7 +6536,9 @@ pc.programlib.phong = {hashCode:function(str) {
       code += chunks.shadowVSPS
     }
   }
-  code += chunks.lightDiffuseLambertPS;
+  if(lighting) {
+    code += chunks.lightDiffuseLambertPS
+  }
   var useOldAmbient = false;
   if(options.useSpecular) {
     code += options.shadingModel === pc.SPECULAR_PHONG ? chunks.lightSpecularPhongPS : chunks.lightSpecularBlinnPS;
@@ -6535,6 +6569,16 @@ pc.programlib.phong = {hashCode:function(str) {
   if(options.alphaTest) {
     code += "   uniform float alpha_ref;\n"
   }
+  if(needsNormal) {
+    code += chunks.viewDirPS;
+    if(options.useSpecular) {
+      code += chunks.reflDirPS
+    }
+  }
+  var hasPointLights = false;
+  var usesLinearFalloff = false;
+  var usesInvSquaredFalloff = false;
+  var usesSpot = false;
   code += chunks.startPS;
   var opacityParallax = false;
   if(options.blendType === pc.BLEND_NONE && !options.alphaTest) {
@@ -6601,13 +6645,17 @@ pc.programlib.phong = {hashCode:function(str) {
         code += "   data.atten = 1.0;\n"
       }else {
         code += "   getLightDirPoint(data, light" + i + "_position);\n";
+        hasPointLights = true;
         if(light.getFalloffMode() == pc.LIGHTFALLOFF_LINEAR) {
-          code += "   data.atten = getFalloffLinear(data, light" + i + "_radius);\n"
+          code += "   data.atten = getFalloffLinear(data, light" + i + "_radius);\n";
+          usesLinearFalloff = true
         }else {
-          code += "   data.atten = getFalloffInvSquared(data, light" + i + "_radius);\n"
+          code += "   data.atten = getFalloffInvSquared(data, light" + i + "_radius);\n";
+          usesInvSquaredFalloff = true
         }
         if(lightType === pc.LIGHTTYPE_SPOT) {
-          code += "   data.atten *= getSpotEffect(data, light" + i + "_spotDirection, light" + i + "_innerConeAngle, light" + i + "_outerConeAngle);\n"
+          code += "   data.atten *= getSpotEffect(data, light" + i + "_spotDirection, light" + i + "_innerConeAngle, light" + i + "_outerConeAngle);\n";
+          usesSpot = true
         }
       }
       code += "   data.atten *= getLightDiffuse(data);\n";
@@ -6673,6 +6721,81 @@ pc.programlib.phong = {hashCode:function(str) {
   }
   code += "\n";
   code += getSnippet(device, "common_main_end");
+  if(hasPointLights) {
+    code = chunks.lightDirPointPS + code
+  }
+  if(usesLinearFalloff) {
+    code = chunks.falloffLinearPS + code
+  }
+  if(usesInvSquaredFalloff) {
+    code = chunks.falloffInvSquaredPS + code
+  }
+  if(usesSpot) {
+    code = chunks.spotPS + code
+  }
+  var structCode = "struct psInternalData {\n";
+  if(code.includes("data.reflection")) {
+    structCode += "vec4 reflection;\n"
+  }
+  if(code.includes("data.TBN")) {
+    structCode += "mat3 TBN;\n"
+  }
+  if(code.includes("data.albedo")) {
+    structCode += "vec3 albedo;\n"
+  }
+  if(code.includes("data.emission")) {
+    structCode += "vec3 emission;\n"
+  }
+  if(code.includes("data.normalW")) {
+    structCode += "vec3 normalW;\n"
+  }
+  if(code.includes("data.viewDirW")) {
+    structCode += "vec3 viewDirW;\n"
+  }
+  if(code.includes("data.reflDirW")) {
+    structCode += "vec3 reflDirW;\n"
+  }
+  if(code.includes("data.diffuseLight")) {
+    structCode += "vec3 diffuseLight;\n"
+  }
+  if(code.includes("data.specularLight")) {
+    structCode += "vec3 specularLight;\n"
+  }
+  if(code.includes("data.lightDirNormW")) {
+    structCode += "vec3 lightDirNormW;\n"
+  }
+  if(code.includes("data.lightDirW")) {
+    structCode += "vec3 lightDirW;\n"
+  }
+  if(code.includes("data.lightPosW")) {
+    structCode += "vec3 lightPosW;\n"
+  }
+  if(code.includes("data.shadowCoord")) {
+    structCode += "vec3 shadowCoord;\n"
+  }
+  if(code.includes("data.normalMap")) {
+    structCode += "vec3 normalMap;\n"
+  }
+  if(code.includes("data.specularity")) {
+    structCode += "vec3 specularity;\n"
+  }
+  if(code.includes("data.uvOffset")) {
+    structCode += "vec2 uvOffset;\n"
+  }
+  if(code.includes("data.glossiness")) {
+    structCode += "float glossiness;\n"
+  }
+  if(code.includes("data.alpha")) {
+    structCode += "float alpha;\n"
+  }
+  if(code.includes("data.atten")) {
+    structCode += "float atten;\n"
+  }
+  if(code.includes("data.ao")) {
+    structCode += "float ao;\n"
+  }
+  structCode += "};\n";
+  code = codeBegin + structCode + code;
   fshader = code;
   return{attributes:attributes, vshader:vshader, fshader:fshader, tag:pc.SHADERTAG_MATERIAL}
 }};

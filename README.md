@@ -1,43 +1,43 @@
 # electron-playcanvas
  Created by: Lightnet
 
- ## License:
+## License:
   [CC0 (Public Domain)](LICENSE.md)
 
- ## Development Status:
+## Development Status:
   Early Stage.
 
- ## Information:
+## Information:
   Using the Electron to have PlayCanvas to run stand alone application.
   As well server hosting on local play.
 
- # Require to run application:
+# Require to run application:
   * nodejs https://nodejs.org/
   * RethinkDB https://www.rethinkdb.com/
 
- ## Application Menus
+## Application Menus
   * Check Status (no function yet)
   * Start server (no function yet)
   * Client Game (no function yet)
   * Settings (no function yet)
   * Start Game (work in progress)
 
- ## Base stuff:
+## Base stuff:
   * Currently it start a server from background and not the window browser.
   * Start Game is link to the url default localhost.
 
- ## Features:
+## Features:
   * Development for web game builds. (work in progress)
   * Run the server express.
   * Run Rethinkdb for real time database.
   * Socket.io for chat messages (work in progress)
   * Engine.io for server side game object and message. (work in progress)
 
- ## Notes:
+## Notes:
   * Not recommend for hosting that is under development.
   * var engineio = eio(); //bug using the IPv6 using http://[[ipadress]] <- wrong instead http://[ipadress]
 
- ## nodejs packages:
+## nodejs packages:
   * rethinkdb
   * protobufjs
   * ammo.js
@@ -49,25 +49,25 @@
   * jsdom
   * xmlhttprequest
 
- ## web browser javascript:
+## web browser javascript:
   * long.min.js https://github.com/dcodeIO/long.js
   * bytebuffer.min.js https://github.com/dcodeIO/bytebuffer.js
   * protobuf.min.js https://github.com/dcodeIO/protobuf.js
   * playcanvas-stable.js http://playcanvas.com
   * smoothie.js http://smoothiecharts.org/
 
- ## Programs:
+## Programs:
   * RethinkDB https://www.rethinkdb.com/ (require)
   * Atom https://atom.io/
   * Electron http://electron.atom.io/
   * nodejs https://nodejs.org/ (require)
 
- ## Installing:
+## Installing:
   npm install
 
   npm start //to start application
 
- ## Window
+## Window
 
 http://localhost:8080/ rethinkdb
 

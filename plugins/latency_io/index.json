@@ -2,6 +2,6 @@
     "name": "latency_io",
     "information": "latency io Test",
     "version":"0.0.1",
-    "bable": true,
+    "bable": false,
     "script":"latency_index.js"
 }

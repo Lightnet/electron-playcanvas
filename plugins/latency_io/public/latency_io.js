@@ -6,6 +6,10 @@
   	Please read the readme.txt file for more information.
 */
 
+// Initialize ProtoBuf.js
+var ProtoBuf = dcodeIO.ProtoBuf;
+var ByteBuffer = dcodeIO.ByteBuffer;
+var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
 
 // cross browser way to add an event listener
 function addListener(event, obj, fn) {
@@ -82,7 +86,6 @@ console.log(document.URL);
 //var engineio = eio('ws://[]');
 var engineio = eio();
 
-
 engineio.on('open', function(){
     send_Latency_eio();
     engineio.on('message', function(data){
@@ -98,7 +101,7 @@ engineio.on('open', function(){
         //console.log(ByteBuffer(data));
         try{
             var source = new ByteBuffer.wrap(data).flip().readIString();
-            //console.log(source);
+            console.log(source);
             //console.log("pass");
         }catch(e){
             //console.log("error :" + e);
@@ -106,13 +109,76 @@ engineio.on('open', function(){
 
         try{
             var msg = Message.decode(data);
-            //console.log("msg:" + msg.text);
+            console.log("msg:" + msg.text);
         }catch(error){
             //console.log("error :"+error);
         }
+
+
     });
     engineio.on('close', function(){
         //if (smoothie) smoothie.stop();
         document.getElementById('etransport').innerHTML = '(disconnected)';
     });
 });
+
+function send() {
+    if (engineio != null) {
+        var inputtext = document.getElementById('textinput');
+        console.log(inputtext.value);
+        var msg = new Message(inputtext.value);
+        //var msg = new Message('hello world message.');
+        //console.log(msg.toArrayBuffer());
+		console.log("Sent: " + msg.text);
+        engineio.send(msg.toArrayBuffer());
+        //engineio.send('test');
+
+    } else {
+        console.log("Not connected");
+    }
+}
+
+function requestmsg() {
+    engineio.send('servermsg');
+}
+
+function send_buffer() {
+    if (engineio != null) {
+        var inputtext = document.getElementById('bufferinput');
+        console.log(inputtext.value);
+        var bb_text = new ByteBuffer()
+                    .writeIString(inputtext.value)
+                    .flip()
+                    .toBuffer();
+        engineio.send(bb_text);
+        console.log("Sent: "+bb_text);
+    } else {
+        console.log("Not connected");
+    }
+}
+
+function test_buffer() {
+    if (engineio != null) {
+        var inputtext = document.getElementById('buffertest');
+        console.log(inputtext.value);
+        var bb_text = new ByteBuffer();
+        //console.log(bb_text);
+        //console.log(bb_text.limit);
+        //console.log(bb_text.capacity());
+        bb_text.writeIString(inputtext.value)
+											.writeIString(inputtext.value)
+                    						.flip()
+                    						.toBuffer();
+        //console.log(bb_text.limit);
+        //console.log(bb_text.capacity());
+        //engineio.send(bb_text);
+        //console.log("Sent: "+bb_text);
+        //console.log(bb_text);
+		var source = new ByteBuffer.wrap(bb_text)
+											.flip()
+											.readIString();
+		console.log(source);
+    } else {
+        console.log("Not connected");
+    }
+}

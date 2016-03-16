@@ -13,12 +13,11 @@ var router = express.Router();
 router.get('/ping', function(req, res){
     res.status(200).send("pong!");
 });
+
 /*
 router.get('/test', function(req, res){
     res.render("test",{});
 });
 */
-
-
 
 module.exports = router;

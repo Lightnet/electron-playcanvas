@@ -125,9 +125,9 @@ router.get('/engine.io.js', function (req, res) {
     res.send(eio_contents);
 });
 //test index page default
-router.get('/', function (req, res) {
-    res.render("index", {});
-});
+//router.get('/', function(req, res){
+//res.render("index",{});
+//});
 // route, router
 plugin.SetRoutes(routes, router);
 router.use('/', routes);

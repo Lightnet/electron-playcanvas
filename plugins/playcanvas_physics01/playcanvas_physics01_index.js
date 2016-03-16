@@ -38,8 +38,7 @@ module.exports.setroute = function(routes,app){
 	app.use(express.static(__dirname + '/public'));
 	//add current dir plugin views folder
 	//app.set('views',path.join(__dirname,'/views'));
-
-
+	
 	//routes.get('/basemodule', function (req, res) {
 		//res.contentType('text/html');
 		//res.send('Hello World!'); //write string data page

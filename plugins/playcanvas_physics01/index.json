@@ -2,6 +2,6 @@
     "name": "playcanvas_physics01",
     "information": "playcanvas physics 01 test network",
     "version":"0.0.1",
-    "bable": true,
+    "bable": false,
     "script":"playcanvas_physics01_index.js"
 }

@@ -13,9 +13,7 @@
 		<script type="text/javascript" src="/protobuf.min.js"></script>
 		<script type="text/javascript" src="/ammo.443a8cf.js"></script>
 		<script type="text/javascript" src="/playcanvas-stable.js"></script>
-		<!--
-		<script type="text/javascript" src="/pcpnetwork.js"></script>
-		-->
+		<script type="text/javascript" src="/playcanvas-io.js"></script>
 		<script type="text/javascript" src="/simplescene.js"></script>
 
 		<style>
@@ -64,8 +62,8 @@
 		<div id="displaydebug">
 			<canvas id="chartcanvas" width="400" height="100"></canvas>
 			<p>
-			[<label style="color:yellow">socket.io latency <span style="color:green" id="slatency"></span></label>]
-			[<label style="color:yellow">engine.io latency <span style="color:blue" id="elatency"></span></label>]
+			[</span> <label style="color:gray">socket.io :<label style="color:gray" id="stransport"></label>: latency <label style="color:green" id="slatency">0</label></label>]
+			[</span> <label style="color:gray">engine.io :<label style="color:gray" id="etransport"></label>: latency <label style="color:blue" id="elatency">0</label></label>]
 			</p>
 		</div>
 	</body>

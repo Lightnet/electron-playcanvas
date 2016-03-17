@@ -26,7 +26,8 @@ class managePlugin{
     config:any;
     databasetype:string = "";
     database:any = [];
-    io:any;
+    socketio:any;
+	engineio:any;
     app:any;
     routes:any;
     modulelist:any = [];
@@ -168,6 +169,12 @@ class managePlugin{
 //===============================================
 // Engine.IO
 //===============================================
+	set_engineio(obj){
+		this.engineio = obj;
+	}
+	get_engineio(){
+		return this.engineio;
+	}
     //engine.io call
     call_engineio_connect(eio,socket){
         for(var i = 0; i < this.eio_connectlist.length;i++){
@@ -187,14 +194,12 @@ class managePlugin{
 //===============================================
 // Socket.IO
 //===============================================
-    //set socket.io set
-    setSocketIO(_io){
-        this.io = _io;
-    }
-    //get socket.io
-    getSocketIO(){
-        return this.io;
-    }
+	set_socketio(obj){
+		this.socketio = obj;
+	}
+	get_socketio(){
+		return this.socketio;
+	}
     //set connection
     Call_SocketIO_Connection(_io, _socket){
         for (var i = 0; i < this.socketconnectList.length; i++ ){

@@ -9,7 +9,7 @@
 // Initialize ProtoBuf.js
 var ProtoBuf = dcodeIO.ProtoBuf;
 var ByteBuffer = dcodeIO.ByteBuffer;
-var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
+//var Message = ProtoBuf.loadProtoFile("/example.proto").build("Message");
 
 // cross browser way to add an event listener
 function addListener(event, obj, fn) {
@@ -21,14 +21,7 @@ function addListener(event, obj, fn) {
 }
 
 //chart
-/*
-var smoothie = new SmoothieChart({
-  grid: {lineWidth: 1, millisPerLine: 200, verticalSections: 6, }
-});
-*/
-var smoothie = new SmoothieChart({
-
-});
+var smoothie = new SmoothieChart({});
 // Data
 var line1 = new TimeSeries();
 var line2 = new TimeSeries();
@@ -39,15 +32,14 @@ smoothie.addTimeSeries(line2,{ strokeStyle:'rgb(0, 255, 0)', lineWidth:1 });
 //make sure this load right
 addListener("load", window,function(){
     //smoothie.streamTo(document.getElementById("mycanvas"));
-    smoothie.streamTo(document.getElementById("mycanvas"), 1000 /*delay*/);
+    smoothie.streamTo(document.getElementById("chartcanvas"), 1000 /*delay*/);
 });
 
 var siolast;
 function send_Latency_sio(){
-  siolast = new Date;
-  socketio.emit('Latency');
-  document.getElementById('stransport').innerHTML = socketio.io.engine.transport.name;
-  //document.getElementById('stransport').innerHTML = socketio.socket.transport.name;
+	siolast = new Date;
+	socketio.emit('Latency');
+	document.getElementById('stransport').innerHTML = socketio.io.engine.transport.name;
 }
 
 var socketio = io();
@@ -74,10 +66,9 @@ socketio.on('disconnect', function(){
 	document.getElementById('stransport').innerHTML = '(disconnected)';
 });
 
-
-var last;
+var elast;
 function send_Latency_eio(){
-  last = new Date;
+  elast = new Date;
   engineio.send('Latency');
   document.getElementById('etransport').innerHTML = engineio.transport.name;
 }
@@ -92,7 +83,7 @@ engineio.on('open', function(){
         //console.log(data);//display data
         //this is to filter out the string name Latency
         if(data == 'Latency'){
-            var latency = new Date - last;
+            var latency = new Date - elast;
             document.getElementById('elatency').innerHTML = latency + 'ms';
             //if (time) time.append(+new Date, latency);
             line1.append(+new Date, latency)
@@ -108,8 +99,8 @@ engineio.on('open', function(){
         }
 
         try{
-            var msg = Message.decode(data);
-            console.log("msg:" + msg.text);
+            //var msg = Message.decode(data);
+            //console.log("msg:" + msg.text);
         }catch(error){
             //console.log("error :"+error);
         }

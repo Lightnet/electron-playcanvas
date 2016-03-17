@@ -1,7 +1,0 @@
-{
-    "name": "pcrpgio",
-    "information": "rpgio Test",
-    "version":"0.0.1",
-    "bable": true,
-    "script":"rpgio_index.js"
-}

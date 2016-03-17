@@ -135,10 +135,12 @@ router.use('/', routes);
 // socket.io
 // ==============================================
 require('./app/libs/socketio_handle.js')(io);
+plugin.set_socketio(io);
 // ==============================================
 // engine.io
 // ==============================================
 require('./app/libs/engineio_handle.js')(engineio);
+plugin.set_engineio(engineio);
 /*
 var messages = [];
 var sockets = [];

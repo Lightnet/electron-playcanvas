@@ -1,0 +1,7 @@
+{
+    "name": "playcanvas-template",
+    "information": "playcanvas-template Test",
+    "version":"0.0.1",
+    "bable": false,
+    "script":"playcanvas-template_index.js"
+}

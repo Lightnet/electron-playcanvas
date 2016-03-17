@@ -1,0 +1,7 @@
+{
+    "name": "playcanvas-rpgio",
+    "information": "playcanvas-rpgio Test",
+    "version":"0.0.1",
+    "bable": true,
+    "script":"playcanvas-rpgio_index.js"
+}

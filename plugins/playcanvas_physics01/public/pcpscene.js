@@ -257,7 +257,7 @@ function CreateScene(pc,app){
 		//e.progressp = (e.progressp || 0.0) + dt / e.durationp;
 		e.progressp = (e.progressp || 0.0) + dt / 0.1;
 		r.lerp(e.getPosition().clone(),e.end.clone(),e.progressp);
-		console.log(e.progressp);
+		//console.log(e.progressp);
 		e.setPosition(r);
 		r = null;
 		//update rotate

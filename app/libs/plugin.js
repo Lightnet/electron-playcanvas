@@ -151,6 +151,12 @@ var managePlugin = (function () {
     //===============================================
     // Engine.IO
     //===============================================
+    managePlugin.prototype.set_engineio = function (obj) {
+        this.engineio = obj;
+    };
+    managePlugin.prototype.get_engineio = function () {
+        return this.engineio;
+    };
     //engine.io call
     managePlugin.prototype.call_engineio_connect = function (eio, socket) {
         for (var i = 0; i < this.eio_connectlist.length; i++) {
@@ -170,13 +176,11 @@ var managePlugin = (function () {
     //===============================================
     // Socket.IO
     //===============================================
-    //set socket.io set
-    managePlugin.prototype.setSocketIO = function (_io) {
-        this.io = _io;
+    managePlugin.prototype.set_socketio = function (obj) {
+        this.socketio = obj;
     };
-    //get socket.io
-    managePlugin.prototype.getSocketIO = function () {
-        return this.io;
+    managePlugin.prototype.get_socketio = function () {
+        return this.socketio;
     };
     //set connection
     managePlugin.prototype.Call_SocketIO_Connection = function (_io, _socket) {

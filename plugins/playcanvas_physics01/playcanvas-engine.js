@@ -10,13 +10,11 @@
 // Browser variable setup
 //=========================================================
 
-
 // 0 = socket.io
 // 1 = engine.io
 OBJIONetworkType = 1;
 //
 bConfigPlayCanvas = true;
-
 
 const fs = require('fs');
 const path = require('path');

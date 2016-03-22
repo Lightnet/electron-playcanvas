@@ -1,0 +1,56 @@
+{
+  "name": "SP-RPG",
+  "assets": [
+    {
+      "id": "2",
+      "name": "Behaviors",
+      "type": null,
+      "children": [
+        {
+          "id": "3",
+          "name": "Script",
+          "type": "script"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Scenes",
+      "type": null,
+      "children": [
+        {
+          "id": "0",
+          "name": "Scene",
+          "type": "scene"
+        },
+        {
+          "id": "8",
+          "name": "Cubic Model",
+          "type": "cubicModel"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "sprites",
+      "type": null,
+      "children": [
+        {
+          "id": "6",
+          "name": "point",
+          "type": "sprite"
+        },
+        {
+          "id": "7",
+          "name": "bullet",
+          "type": "sprite"
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "name": "Game",
+      "type": "script"
+    }
+  ]
+}

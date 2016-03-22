@@ -104,8 +104,6 @@ engineio.on('open', function(){
         }catch(error){
             //console.log("error :"+error);
         }
-
-
     });
     engineio.on('close', function(){
         //if (smoothie) smoothie.stop();

@@ -1,0 +1,183 @@
+{
+  "formatVersion": 1,
+  "nodes": [
+    {
+      "id": "0",
+      "name": "Camera",
+      "children": [],
+      "components": [
+        {
+          "type": "Camera",
+          "config": {
+            "mode": "perspective",
+            "fov": 45,
+            "orthographicScale": 10,
+            "viewport": {
+              "x": 0,
+              "y": 0,
+              "width": 1,
+              "height": 1
+            },
+            "depth": 0,
+            "nearClippingPlane": 0.1,
+            "farClippingPlane": 1000
+          },
+          "id": "0"
+        }
+      ],
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 20
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "visible": true,
+      "layer": 0,
+      "prefab": null
+    },
+    {
+      "id": "2",
+      "name": "sprite",
+      "children": [],
+      "components": [
+        {
+          "type": "SpriteRenderer",
+          "config": {
+            "spriteAssetId": "6",
+            "animationId": null,
+            "horizontalFlip": false,
+            "verticalFlip": false,
+            "castShadow": false,
+            "receiveShadow": false,
+            "color": "ffffff",
+            "overrideOpacity": false,
+            "opacity": null,
+            "materialType": "basic",
+            "shaderAssetId": null
+          },
+          "id": "0"
+        }
+      ],
+      "position": {
+        "x": 0,
+        "y": 1.677,
+        "z": 0
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 4
+      },
+      "visible": true,
+      "layer": 0,
+      "prefab": null
+    },
+    {
+      "id": "1",
+      "name": "Floor",
+      "children": [],
+      "components": [
+        {
+          "type": "CubicModelRenderer",
+          "config": {
+            "cubicModelAssetId": "8"
+          },
+          "id": "0"
+        }
+      ],
+      "position": {
+        "x": 0,
+        "y": -5,
+        "z": 0
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "scale": {
+        "x": 10,
+        "y": 1,
+        "z": 10
+      },
+      "visible": true,
+      "layer": 0,
+      "prefab": null
+    },
+    {
+      "id": "3",
+      "name": "Light",
+      "children": [],
+      "components": [
+        {
+          "type": "Light",
+          "config": {
+            "type": "point",
+            "color": "ffffff",
+            "intensity": 20,
+            "distance": 50,
+            "angle": 60,
+            "target": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "castShadow": false,
+            "shadowMapSize": {
+              "width": 512,
+              "height": 512
+            },
+            "shadowBias": 0,
+            "shadowDarkness": 0.5,
+            "shadowCameraNearPlane": 0.1,
+            "shadowCameraFarPlane": 1000,
+            "shadowCameraFov": 50,
+            "shadowCameraSize": {
+              "top": 100,
+              "bottom": -100,
+              "left": -100,
+              "right": 100
+            }
+          },
+          "id": "0"
+        }
+      ],
+      "position": {
+        "x": 0.3982018530368805,
+        "y": -2.152008056640625,
+        "z": -0.4705298840999603
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0.9988450145524266,
+        "z": 0,
+        "w": -0.04804813040971879
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "visible": true,
+      "layer": 0,
+      "prefab": null
+    }
+  ]
+}

@@ -8,6 +8,9 @@
 
 'use strict';
 
+var settings = require('./settings.json');
+console.log(settings['autostartdatabase']);
+
 function run_cmd(cmd, args, callBack ) {
     var spawn = require('child_process').spawn;
     var child = spawn(cmd, args);
@@ -17,7 +20,11 @@ function run_cmd(cmd, args, callBack ) {
 } // ()
 
 //run_cmd( "ls", ["-l"], function(text) { console.log (text) });
-//run_cmd( 'rethinkdb', [], function(text) { console.log (text) });
+if(settings['autostartdatabase'] == true){
+	//run_cmd( 'rethinkdb', [], function(text) { console.log (text) });
+	run_cmd( settings['executedatabase'], [], function(text) { console.log (text) });
+}
+
 
 const electron = require('electron');
 // Module to control application life.
@@ -159,7 +166,9 @@ app.on('window-all-closed', function () {
 		//close express
 		serverclose();
 		//stop rethinkdb
-		//run_cmd( 'TASKKILL', [ '/F','/IM','rethinkdb.exe'], function(text) { console.log (text) });
+		if(settings['autostartdatabase'] == true){
+			run_cmd( 'TASKKILL', [ '/F','/IM',settings['executedatabase']+'.exe'], function(text) { console.log (text) });
+		}
 		//process.exit(0);
 		app.quit();
 	}

@@ -1,4 +1,12 @@
-# electron-playcanvas
+# ewb-rpg
+'''
+electron
+web browser
+
+role
+playing
+game
+'''
  Created by: Lightnet
 
 ## License:
@@ -12,8 +20,18 @@
   As well server hosting on local play.
 
 # Require to run application:
-  * nodejs https://nodejs.org/
-  * RethinkDB https://www.rethinkdb.com/
+  * nodejs 5.9.0 https://nodejs.org/
+  * RethinkDB 2.2.4 https://www.rethinkdb.com/
+  
+# Plugins:(they can be turn off/on for projects test build that might conflict other similar builds)
+ * baseplugin -basic setup
+ * latency_io -test socket.io & engine.io ping time different
+ * playcanvas_physics01 -playcanvas headless server 
+ * playcanvas-rpgio -in development
+ * playcanvas-template -empty project
+ * superpowers-html5-template -just testing the super power html5
+ * threejs-headless-template -tested simple threejs headless server scene for webgl
+ * 
 
 ## Application Menus
   * Check Status (no function yet)

@@ -1,12 +1,11 @@
 # ewb-rpg
-'''
+```
 electron
 web browser
-
 role
 playing
 game
-'''
+```
  Created by: Lightnet
 
 ## License:

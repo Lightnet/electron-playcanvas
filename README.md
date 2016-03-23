@@ -15,7 +15,7 @@ game
   Early Stage.
 
 ## Information:
-  Using the Electron to have PlayCanvas to run stand alone application.
+  Using the Electron to have PlayCanvas, threejs, superpowers html5, and others to run stand alone application.
   As well server hosting on local play.
 
 # Require to run application:
